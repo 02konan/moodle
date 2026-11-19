@@ -1,0 +1,5 @@
+# Surcharge pour le développement local uniquement (Dokploy n'en a pas besoin).
+services:
+  app:
+    ports:
+      - "8080:80"

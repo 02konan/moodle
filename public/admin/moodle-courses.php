@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Throwable $ex) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             error_log('[moodle-courses] ' . $ex->getMessage());
-            flash("Enregistrement impossible (la table existe-t-elle ? voir sql/2026-11-moodle-courses.sql).", 'error');
+            flash("Enregistrement impossible (la table existe-t-elle ? voir sql/002-moodle-courses.sql).", 'error');
         }
     }
     header('Location: ./moodle-courses.php');

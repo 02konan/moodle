@@ -1,0 +1,44 @@
+# Déploiement Dokploy : créer un service « Docker Compose » pointant sur ce dépôt,
+# renseigner les variables dans l'onglet Environment, puis associer un domaine au service « app » (port 80).
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-moodle_signup}
+      DB_USER: ${DB_USER:-moodle_signup}
+      DB_PASS: ${DB_PASS:?DB_PASS est obligatoire}
+      REFERENTIEL_API_URL: ${REFERENTIEL_API_URL:-}
+      REFERENTIEL_CACHE_TTL: ${REFERENTIEL_CACHE_TTL:-300}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - storage:/var/www/html/storage
+    expose:
+      - "80"
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-moodle_signup}
+      MARIADB_USER: ${DB_USER:-moodle_signup}
+      MARIADB_PASSWORD: ${DB_PASS:?DB_PASS est obligatoire}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:?DB_ROOT_PASS est obligatoire}
+      TZ: Africa/Abidjan
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
+  storage:
