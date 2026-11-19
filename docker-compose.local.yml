@@ -1,5 +1,10 @@
-# Surcharge pour le développement local uniquement (Dokploy n'en a pas besoin).
+# Surcharge pour le développement local uniquement (Dokploy n'en a pas besoin) :
+# publie le port 8080 et crée localement le réseau qui existe déjà sur Dokploy.
 services:
   app:
     ports:
       - "8080:80"
+
+networks:
+  dokploy-network:
+    external: false

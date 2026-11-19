@@ -1,5 +1,6 @@
 # Déploiement Dokploy : créer un service « Docker Compose » pointant sur ce dépôt,
 # renseigner les variables dans l'onglet Environment, puis associer un domaine au service « app » (port 80).
+# « app » est branché sur dokploy-network (réseau de Traefik) ; la base reste sur le réseau interne.
 services:
   app:
     build: .
@@ -8,7 +9,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
+      DB_HOST: moodle-signup-db   # alias unique : évite de joindre la base d'un autre projet sur dokploy-network
       DB_NAME: ${DB_NAME:-moodle_signup}
       DB_USER: ${DB_USER:-moodle_signup}
       DB_PASS: ${DB_PASS:?DB_PASS est obligatoire}
@@ -20,6 +21,12 @@ services:
       - storage:/var/www/html/storage
     expose:
       - "80"
+    networks:
+      - internal
+      - dokploy-network
+    labels:
+      # Le conteneur est sur deux réseaux : Traefik doit passer par le sien
+      - traefik.docker.network=dokploy-network
 
   db:
     image: mariadb:11.4
@@ -33,11 +40,20 @@ services:
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      internal:
+        aliases:
+          - moodle-signup-db
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
+
+networks:
+  internal:
+  dokploy-network:
+    external: true
 
 volumes:
   db_data:
