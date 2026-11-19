@@ -1,0 +1,21 @@
+# Configuration locale et secrets
+.env
+.env.*
+!.env.example
+
+# Cache du référentiel (conserver le dossier)
+/storage/*.json
+!/storage/.gitkeep
+
+# Fichiers temporaires et journaux
+*.log
+*.tmp
+
+# Dépendances PHP (si Composer est ajouté ultérieurement)
+/vendor/
+
+# Fichiers système et éditeurs
+.DS_Store
+Thumbs.db
+/.idea/
+/.vscode/
