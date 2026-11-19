@@ -243,8 +243,7 @@ $teacherPhoneMap   = array_column($allTeachers, 'phone', 'fullname'); // fullnam
           <select name="cohort" onchange="this.form.submit()">
             <?php foreach ($cohorts as $c): ?>
               <option value="<?= e($c['cohort']) ?>" <?= $c['cohort'] === $selectedCohort ? 'selected' : '' ?>>
-                <?= e($c['cohort']) ?> — <?= (int)$c['n_students'] ?> étudiant<?= $c['n_students'] > 1 ? 's' : '' ?> · <?= (int)$c['n_subjects'] ?> matière<?= $c['n_subjects'] > 1 ? 's' : '' ?>
-              </option>
+                <?= e($c['cohort']) ?></option>
             <?php endforeach; ?>
           </select>
         </label>
