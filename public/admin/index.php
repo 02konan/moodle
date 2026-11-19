@@ -26,6 +26,7 @@ $st = $pdo->prepare($sql);
 $st->execute($params);
 $rows = $st->fetchAll();
 
+$subjects = subjects_by_cohort($pdo);
 $stats = $pdo->query('SELECT COUNT(*) total, SUM(exported_at IS NULL) fresh, COUNT(DISTINCT cohort) cohorts FROM students')->fetch();
 $cohorts = $pdo->query('SELECT cohort, SUM(exported_at IS NULL) n FROM students GROUP BY cohort ORDER BY cohort')->fetchAll();
 $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GET, $extra), fn($v) => $v !== '' && $v !== null));
@@ -102,7 +103,14 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
             <td><?= e($r['email']) ?></td>
             <td class="muted"><?= e($r['password']) ?></td>
             <td><span class="pill"><?= e($r['cohort']) ?></span></td>
-            <td class="small"><?= e(moodle_course_name($r['cohort'], $r['section_code'])) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span></td>
+            <td class="small">
+              <?php $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects); ?>
+              <?php if ($courses): ?>
+                <?= implode('<br>', array_map('e', $courses)) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span>
+              <?php else: ?>
+                <a class="tag tag-new" href="./cohort-subjects.php?cohort=<?= e(urlencode($r['cohort'])) ?>">Aucune matière</a>
+              <?php endif; ?>
+            </td>
             <td><?= $r['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
             <td>
               <form method="post" action="./delete.php" onsubmit="return confirm('Supprimer cet étudiant ?');">

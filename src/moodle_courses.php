@@ -2,11 +2,13 @@
 declare(strict_types=1);
 
 /**
- * Cours et groupe Moodle déduits automatiquement de la cohorte (colonnes course1 / group1 du CSV).
+ * Cours et groupes Moodle déduits automatiquement (colonnes courseN / groupN du CSV).
  *
- *   cohorte « BTS-2-FC-03-ANY » (classe BTS 2 FC 03, section ANY)
- *     → course1 = « BTS 2 FC »               (nom abrégé du cours de la filière)
- *     → group1  = « GP/BTS-2-FC-03-ANY »     (créé par Moodle dans le cours s'il n'existe pas)
+ *   cohorte « BTS-2-FC-03-ANY » + matières saisies dans « Matières par cohorte »
+ *     → course1 = « BTS 2 FC: MATHÉMATIQUES GÉNÉRALES »   group1 = « GP/BTS-2-FC-03-ANY »
+ *     → course2 = « BTS 2 FC: COMPTABILITÉ »              group2 = « GP/BTS-2-FC-03-ANY »
+ * Le nom du cours doit être identique au nom abrégé dans Moodle.
+ * Le groupe est créé par Moodle dans chaque cours s'il n'existe pas.
  */
 
 const GROUP_PREFIX = 'GP/';
@@ -16,8 +18,8 @@ function moodle_group_name(string $cohort): string
     return GROUP_PREFIX . $cohort;
 }
 
-/** Retire la section et le numéro de classe de la cohorte : « BTS-2-FC-03-ANY » → « BTS 2 FC ». */
-function moodle_course_name(string $cohort, string $sectionCode = ''): string
+/** Filière de la cohorte (section et numéro de classe retirés) : « BTS-2-FC-03-ANY » → « BTS 2 FC ». */
+function moodle_course_prefix(string $cohort, string $sectionCode = ''): string
 {
     $suffix = '-' . slug_upper($sectionCode);
     if ($sectionCode !== '' && str_ends_with($cohort, $suffix)) {
@@ -29,4 +31,29 @@ function moodle_course_name(string $cohort, string $sectionCode = ''): string
     }
     if (count($tokens) >= 2 && ctype_digit(end($tokens))) array_pop($tokens);
     return implode(' ', array_filter($tokens, fn($t) => $t !== ''));
+}
+
+/** Nom abrégé Moodle : « BTS 2 FC: MATHÉMATIQUES GÉNÉRALES ». */
+function moodle_course_name(string $prefix, string $subject): string
+{
+    $subject = preg_replace('/\s+/u', ' ', trim($subject)) ?? '';
+    return $prefix . ': ' . mb_strtoupper($subject, 'UTF-8');
+}
+
+/** Cours de la cohorte, un par matière affectée. */
+function moodle_courses_for(string $cohort, string $sectionCode, array $subjectsByCohort): array
+{
+    $prefix = moodle_course_prefix($cohort, $sectionCode);
+    return array_map(fn($s) => moodle_course_name($prefix, $s), $subjectsByCohort[$cohort] ?? []);
+}
+
+/** ['BTS-2-FC-03-ANY' => ['COMPTABILITÉ', 'MATHÉMATIQUES GÉNÉRALES'], ...] */
+function subjects_by_cohort(PDO $pdo): array
+{
+    $rows = $pdo->query(
+        'SELECT cs.cohort, s.label FROM cohort_subjects cs JOIN subjects s ON s.id = cs.subject_id ORDER BY cs.cohort, s.label'
+    )->fetchAll();
+    $out = [];
+    foreach ($rows as $r) $out[$r['cohort']][] = $r['label'];
+    return $out;
 }

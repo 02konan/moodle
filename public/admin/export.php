@@ -30,9 +30,14 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Cache-Control: no-store');
 
+// Un cours par matière de la cohorte (« BTS 2 FC: <MATIÈRE> »), groupe GP/<cohorte> dans chacun
+$subjects = subjects_by_cohort($pdo);
+$maxCourses = 0;
+foreach ($rows as $r) $maxCourses = max($maxCourses, count($subjects[$r['cohort']] ?? []));
+
 // Séparateur « ; », CRLF — mêmes colonnes que Cohorte_enseignant_3.csv (nom avant prénom)
-// course1 / group1 : déduits de la cohorte (ex. BTS 2 FC + GP/BTS-2-FC-03-ANY)
-$cols = ['username', 'firstname', 'lastname', 'email', 'password', 'city', 'cohort1', 'course1', 'group1'];
+$cols = ['username', 'firstname', 'lastname', 'email', 'password', 'city', 'cohort1'];
+for ($i = 1; $i <= $maxCourses; $i++) array_push($cols, "course$i", "group$i");
 
 $buf = fopen('php://temp', 'w+');
 fputcsv($buf, $cols, ';', '"', '');
@@ -45,9 +50,11 @@ foreach ($rows as $r) {
         $r['password'],
         $r['city'],
         $r['cohort'],
-        moodle_course_name($r['cohort'], $r['section_code']),
-        moodle_group_name($r['cohort']),
     ];
+    $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects);
+    for ($i = 0; $i < $maxCourses; $i++) {
+        array_push($line, $courses[$i] ?? '', isset($courses[$i]) ? moodle_group_name($r['cohort']) : '');
+    }
     fputcsv($buf, $line, ';', '"', '');
 }
 rewind($buf);
