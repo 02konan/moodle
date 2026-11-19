@@ -112,7 +112,8 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
               <?php endif; ?>
             </td>
             <td><?= $r['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
-            <td>
+            <td class="row-actions">
+              <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$r['id'], 'back' => $query()])) ?>" title="Modifier" aria-label="Modifier">✎</a>
               <form method="post" action="./delete.php" onsubmit="return confirm('Supprimer cet étudiant ?');">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">

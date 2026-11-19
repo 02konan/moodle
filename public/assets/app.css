@@ -394,3 +394,4 @@ tbody tr:hover { background: var(--soft); }
   gap: 1rem;
   flex-wrap: wrap;
 }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
