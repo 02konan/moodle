@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/filters.php';
+require __DIR__ . '/../../src/moodle_courses.php';
 require_admin();
 
 $pdo = db();
@@ -48,7 +49,6 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
   <nav>
     <a class="link small" href="./index.php" aria-current="page">Accueil</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./moodle-courses.php">Cours &amp; groupes</a>
     <span class="nav-sep" aria-hidden="true"></span>
     <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
     <a class="btn-logout small" href="./logout.php">Déconnexion</a>
@@ -92,7 +92,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Mot de passe</th><th>Cohorte</th><th>Export</th><th></th>
+          <th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Mot de passe</th><th>Cohorte</th><th>Cours / groupe Moodle</th><th>Export</th><th></th>
         </tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
@@ -102,6 +102,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
             <td><?= e($r['email']) ?></td>
             <td class="muted"><?= e($r['password']) ?></td>
             <td><span class="pill"><?= e($r['cohort']) ?></span></td>
+            <td class="small"><?= e(moodle_course_name($r['cohort'], $r['section_code'])) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span></td>
             <td><?= $r['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
             <td>
               <form method="post" action="./delete.php" onsubmit="return confirm('Supprimer cet étudiant ?');">
@@ -114,7 +115,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
           </tr>
         <?php endforeach; ?>
         <?php if (!$rows): ?>
-          <tr><td colspan="7" class="empty">Aucun étudiant pour ces critères.</td></tr>
+          <tr><td colspan="8" class="empty">Aucun étudiant pour ces critères.</td></tr>
         <?php endif; ?>
         </tbody>
       </table>
