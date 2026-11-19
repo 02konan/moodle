@@ -48,6 +48,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
   <nav>
     <a class="link small" href="./index.php" aria-current="page">Accueil</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
+    <a class="link small" href="./moodle-courses.php">Cours &amp; groupes</a>
     <span class="nav-sep" aria-hidden="true"></span>
     <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
     <a class="btn-logout small" href="./logout.php">Déconnexion</a>

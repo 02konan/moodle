@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/filters.php';
+require __DIR__ . '/../../src/moodle_courses.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valid($_POST['csrf'] ?? null)) {
@@ -12,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valid($_POST['csrf'] ?? null)
 
 $pdo = db();
 [$where, $params] = student_filters($_POST);
-$st = $pdo->prepare("SELECT s.id, s.username, s.lastname, s.firstname, s.email, s.password, s.city, s.cohort
+$st = $pdo->prepare("SELECT s.id, s.username, s.lastname, s.firstname, s.email, s.password, s.city, s.cohort, s.class_label
                      FROM students s WHERE $where ORDER BY s.cohort, s.lastname, s.firstname");
 $st->execute($params);
 $rows = $st->fetchAll();
@@ -29,13 +30,29 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Cache-Control: no-store');
 
+// Cours de la filière + groupe GP/<cohorte> (colonnes courseN / groupN de l'import Moodle)
+try {
+    $catalogue = course_catalogue($pdo);
+    $aliases   = filiere_aliases($pdo);
+} catch (PDOException $ex) {
+    error_log('[export] catalogue des cours indisponible : ' . $ex->getMessage());
+    $catalogue = $aliases = [];
+}
+$coursesByClass = [];
+$maxCourses = 0;
+foreach ($rows as $r) {
+    $coursesByClass[$r['class_label']] ??= courses_for_class($r['class_label'], $catalogue, $aliases);
+    $maxCourses = max($maxCourses, count($coursesByClass[$r['class_label']]));
+}
+
 // Séparateur « ; », CRLF — mêmes colonnes que Cohorte_enseignant_3.csv (nom avant prénom)
 $cols = ['username', 'firstname', 'lastname', 'email', 'password', 'city', 'cohort1'];
+for ($i = 1; $i <= $maxCourses; $i++) array_push($cols, "course$i", "group$i");
 
 $buf = fopen('php://temp', 'w+');
 fputcsv($buf, $cols, ';', '"', '');
 foreach ($rows as $r) {
-    fputcsv($buf, [
+    $line = [
         $r['username'],
         $r['firstname'],
         $r['lastname'].' ('.$r['cohort'].')',
@@ -43,7 +60,12 @@ foreach ($rows as $r) {
         $r['password'],
         $r['city'],
         $r['cohort'],
-    ], ';', '"', '');
+    ];
+    $courses = $coursesByClass[$r['class_label']];
+    for ($i = 0; $i < $maxCourses; $i++) {
+        array_push($line, $courses[$i] ?? '', isset($courses[$i]) ? moodle_group_name($r['cohort']) : '');
+    }
+    fputcsv($buf, $line, ';', '"', '');
 }
 rewind($buf);
 

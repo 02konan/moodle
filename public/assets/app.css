@@ -81,12 +81,13 @@ code { background: var(--soft); padding: .1em .45em; border-radius: 6px; font-si
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field { display: grid; gap: 6px; }
 .field > span { font-size: .85rem; font-weight: 500; }
-input, select {
+input, select, textarea {
   font: inherit; color: var(--ink); background: var(--white); border: 0; border-radius: 14px;
   padding: .85rem 1rem; box-shadow: 0 0 0 1px var(--soft-2); width: 100%; outline: none;
   transition: box-shadow .2s var(--ease);
 }
-input:focus, select:focus { box-shadow: 0 0 0 2px var(--ink); }
+input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 2px var(--ink); }
+textarea { resize: vertical; line-height: 1.5; }
 .field.has-error input { box-shadow: 0 0 0 2px var(--accent); animation: shake .35s; }
 .err { color: var(--ink); font-size: .8rem; min-height: 0; }
 .field.has-error .err::before { content: "● "; color: var(--accent); }
