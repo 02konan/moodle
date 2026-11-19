@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valid($_POST['csrf'] ?? null)
 
 $pdo = db();
 [$where, $params] = student_filters($_POST);
-$st = $pdo->prepare("SELECT s.id, s.username, s.lastname, s.firstname, s.email, s.password, s.city, s.cohort, s.class_label
+$st = $pdo->prepare("SELECT s.id, s.username, s.lastname, s.firstname, s.email, s.password, s.city, s.cohort, s.section_code
                      FROM students s WHERE $where ORDER BY s.cohort, s.lastname, s.firstname");
 $st->execute($params);
 $rows = $st->fetchAll();
@@ -30,20 +30,10 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 header('Cache-Control: no-store');
 
-// Cours de la filière + groupe GP/<cohorte> (colonnes courseN / groupN de l'import Moodle)
-try {
-    $catalogue = course_catalogue($pdo);
-    $aliases   = filiere_aliases($pdo);
-} catch (PDOException $ex) {
-    error_log('[export] catalogue des cours indisponible : ' . $ex->getMessage());
-    $catalogue = $aliases = [];
-}
-$coursesByClass = [];
+// Un cours par matière de la cohorte (« BTS 2 FC: <MATIÈRE> »), groupe GP/<cohorte> dans chacun
+$subjects = subjects_by_cohort($pdo);
 $maxCourses = 0;
-foreach ($rows as $r) {
-    $coursesByClass[$r['class_label']] ??= courses_for_class($r['class_label'], $catalogue, $aliases);
-    $maxCourses = max($maxCourses, count($coursesByClass[$r['class_label']]));
-}
+foreach ($rows as $r) $maxCourses = max($maxCourses, count($subjects[$r['cohort']] ?? []));
 
 // Séparateur « ; », CRLF — mêmes colonnes que Cohorte_enseignant_3.csv (nom avant prénom)
 $cols = ['username', 'firstname', 'lastname', 'email', 'password', 'city', 'cohort1'];
@@ -61,7 +51,7 @@ foreach ($rows as $r) {
         $r['city'],
         $r['cohort'],
     ];
-    $courses = $coursesByClass[$r['class_label']];
+    $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects);
     for ($i = 0; $i < $maxCourses; $i++) {
         array_push($line, $courses[$i] ?? '', isset($courses[$i]) ? moodle_group_name($r['cohort']) : '');
     }

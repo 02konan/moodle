@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/filters.php';
+require __DIR__ . '/../../src/moodle_courses.php';
 require_admin();
 
 $pdo = db();
@@ -25,6 +26,7 @@ $st = $pdo->prepare($sql);
 $st->execute($params);
 $rows = $st->fetchAll();
 
+$subjects = subjects_by_cohort($pdo);
 $stats = $pdo->query('SELECT COUNT(*) total, SUM(exported_at IS NULL) fresh, COUNT(DISTINCT cohort) cohorts FROM students')->fetch();
 $cohorts = $pdo->query('SELECT cohort, SUM(exported_at IS NULL) n FROM students GROUP BY cohort ORDER BY cohort')->fetchAll();
 $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GET, $extra), fn($v) => $v !== '' && $v !== null));
@@ -48,7 +50,6 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
   <nav>
     <a class="link small" href="./index.php" aria-current="page">Accueil</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./moodle-courses.php">Cours &amp; groupes</a>
     <span class="nav-sep" aria-hidden="true"></span>
     <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
     <a class="btn-logout small" href="./logout.php">Déconnexion</a>
@@ -92,7 +93,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Mot de passe</th><th>Cohorte</th><th>Export</th><th></th>
+          <th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Mot de passe</th><th>Cohorte</th><th>Cours / groupe Moodle</th><th>Export</th><th></th>
         </tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
@@ -102,8 +103,17 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
             <td><?= e($r['email']) ?></td>
             <td class="muted"><?= e($r['password']) ?></td>
             <td><span class="pill"><?= e($r['cohort']) ?></span></td>
+            <td class="small">
+              <?php $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects); ?>
+              <?php if ($courses): ?>
+                <?= implode('<br>', array_map('e', $courses)) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span>
+              <?php else: ?>
+                <a class="tag tag-new" href="./cohort-subjects.php?cohort=<?= e(urlencode($r['cohort'])) ?>">Aucune matière</a>
+              <?php endif; ?>
+            </td>
             <td><?= $r['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
-            <td>
+            <td class="row-actions">
+              <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$r['id'], 'back' => $query()])) ?>" title="Modifier" aria-label="Modifier">✎</a>
               <form method="post" action="./delete.php" onsubmit="return confirm('Supprimer cet étudiant ?');">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
@@ -114,7 +124,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
           </tr>
         <?php endforeach; ?>
         <?php if (!$rows): ?>
-          <tr><td colspan="7" class="empty">Aucun étudiant pour ces critères.</td></tr>
+          <tr><td colspan="8" class="empty">Aucun étudiant pour ces critères.</td></tr>
         <?php endif; ?>
         </tbody>
       </table>

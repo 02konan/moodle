@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/Referentiel.php';
+require __DIR__ . '/../../src/students.php';
 
 // Définir le fuseau horaire au début du fichier
 date_default_timezone_set('Africa/Abidjan'); // Côte d'Ivoire
@@ -19,46 +20,24 @@ if (!empty($in['registration_reference'])) {
 }
 
 // --- Validation des champs ---
-$firstname = trim((string)($in['firstname'] ?? ''));
-$lastname  = trim((string)($in['lastname'] ?? ''));
-$email     = mb_strtolower(trim((string)($in['email'] ?? '')), 'UTF-8');
-$username  = clean_username((string)($in['username'] ?? ''));
-$sectionId = (int)($in['section_id'] ?? 0);
-$cycleId   = (int)($in['cycle_id'] ?? 0);
-$levelId   = (int)($in['level_id'] ?? 0);
-$classId   = (int)($in['class_id'] ?? 0);
-$dateConnexion = date('Y-m-d H:i:s');
-
-$errors = [];
-$nameOk = fn(string $v) => $v !== '' && mb_strlen($v) <= 100 && preg_match('/^[\p{L}\p{M}\'’\- ]+$/u', $v);
-if (!$nameOk($firstname)) $errors['firstname'] = 'Prénom invalide.';
-if (!$nameOk($lastname))  $errors['lastname']  = 'Nom invalide.';
-if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) $errors['email'] = 'Adresse e-mail invalide.';
-if (strlen($username) < 3 || strlen($username) > 50) $errors['username'] = "Nom d'utilisateur : 3 à 50 caractères (lettres minuscules et chiffres).";
+[$id, $errors] = validate_identity($in);
 if ($errors) json_out(['error' => 'Vérifiez les champs signalés.', 'fields' => $errors], 422);
+$dateConnexion = date('Y-m-d H:i:s');
 
 // --- Le parcours est revalidé auprès de l'API (cascade complète) ---
 try {
-    $section = Referentiel::find(Referentiel::get('sections'), $sectionId);
-    $cycle = $section ? Referentiel::find(Referentiel::get('cycles', ['section_id' => $sectionId]), $cycleId) : null;
-    $level = $cycle ? Referentiel::find(Referentiel::get('niveaux', ['section_id' => $sectionId, 'cycle_id' => $cycleId]), $levelId) : null;
-    $class = $level ? Referentiel::find(Referentiel::get('classes', ['section_id' => $sectionId, 'cycle_id' => $cycleId, 'niveau_id' => $levelId]), $classId) : null;
+    $p = resolve_parcours((int)($in['section_id'] ?? 0), (int)($in['cycle_id'] ?? 0), (int)($in['level_id'] ?? 0), (int)($in['class_id'] ?? 0));
 } catch (RuntimeException $e) {
     error_log('[register] ' . $e->getMessage());
     json_out(['error' => 'Service indisponible, réessayez dans un instant.'], 502);
 }
-if (!$section || !$cycle || !$level || !$class) {
-    json_out(['error' => 'Parcours incohérent, recommencez la sélection.'], 422);
-}
+if (!$p) json_out(['error' => 'Parcours incohérent, recommencez la sélection.'], 422);
 
 try {
     $pdo = db();
-    $firstname = mb_convert_case($firstname, MB_CASE_TITLE, 'UTF-8');
-    $lastname  = mb_strtoupper($lastname, 'UTF-8');
-    $sectionCode = $section['code'] ?? $section['label'];
-    $cohort = cohort_name($class['label'], $sectionCode);
-
-    $password = make_password($lastname);
+    $cohort   = $p['cohort'];
+    $username = $id['username'];
+    $password = make_password($id['lastname']);
 
     $insert = $pdo->prepare(
         'INSERT INTO students (lastname, firstname, username, email, password, city,
@@ -69,17 +48,15 @@ try {
 
     try {
         $insert->execute([
-            $lastname, $firstname, $username, $email, $password, CITY,
-            $section['id'], $sectionCode, $section['label'], $cycle['id'], $cycle['label'],
-            $level['id'], $level['label'], $class['id'], $class['label'], $cohort, $dateConnexion
+            $id['lastname'], $id['firstname'], $username, $id['email'], $password, CITY,
+            $p['section_id'], $p['section_code'], $p['section_label'], $p['cycle_id'], $p['cycle_label'],
+            $p['level_id'], $p['level_label'], $p['class_id'], $p['class_label'], $cohort, $dateConnexion
         ]);
         json_out(['ok' => true, 'cohort' => $cohort, 'username' => $username, 'password' => $password]);
     } catch (PDOException $ex) {
-        if (($ex->errorInfo[1] ?? 0) !== 1062) throw $ex;
-        if (stripos($ex->getMessage(), 'email') !== false) {
-            json_out(['error' => 'Cette adresse e-mail est déjà inscrite.', 'fields' => ['email' => 'Déjà inscrite.']], 409);
-        }
-        json_out(['error' => "Ce nom d'utilisateur est déjà pris.", 'fields' => ['username' => 'Déjà pris, essayez-en un autre.']], 409);
+        $dup = duplicate_error($ex);
+        if (!$dup) throw $ex;
+        json_out(['error' => $dup[0], 'fields' => $dup[1]], 409);
     }
 } catch (Throwable $e) {
     error_log('[register] ' . $e->getMessage());
