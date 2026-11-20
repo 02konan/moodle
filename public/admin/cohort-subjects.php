@@ -201,6 +201,7 @@ $teacherPhoneMap   = array_column($allTeachers, 'phone', 'fullname'); // fullnam
   <nav>
     <a class="link small" href="./index.php">Inscription étudiant</a>
     <a class="link small" href="./cohort-subjects.php" aria-current="page">Matières par cohorte</a>
+    <a class="link small" href="./courses.php">Noms des cours</a>
     <span class="nav-sep" aria-hidden="true"></span>
     <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
     <a class="btn-logout small" href="./logout.php">Déconnexion</a>

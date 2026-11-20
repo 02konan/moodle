@@ -32,6 +32,7 @@ header('Cache-Control: no-store');
 
 // Un cours par matière de la cohorte (« BTS 2 FC: <MATIÈRE> »), groupe GP/<cohorte> dans chacun
 $subjects = subjects_by_cohort($pdo);
+$overrides = course_overrides($pdo);
 $maxCourses = 0;
 foreach ($rows as $r) $maxCourses = max($maxCourses, count($subjects[$r['cohort']] ?? []));
 
@@ -51,7 +52,7 @@ foreach ($rows as $r) {
         $r['city'],
         $r['cohort'],
     ];
-    $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects);
+    $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects, $overrides);
     for ($i = 0; $i < $maxCourses; $i++) {
         array_push($line, $courses[$i] ?? '', isset($courses[$i]) ? moodle_group_name($r['cohort']) : '');
     }
