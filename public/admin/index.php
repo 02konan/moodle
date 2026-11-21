@@ -92,14 +92,70 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
       <button class="btn btn-primary" type="submit" <?= $total === 0 ? 'disabled' : '' ?>>Exporter CSV (<?= $total ?>)</button>
     </form>
 
+    <!-- Actions de masse : les cases du tableau y sont rattachées via l'attribut form="bulk-form"
+         (pas de formulaire imbriqué avec les boutons « Supprimer » de chaque ligne). -->
+    <form id="bulk-form" method="post" action="./bulk.php" novalidate>
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+      <input type="hidden" name="back" value="<?= e($query()) ?>">
+
+      <div class="bulk-bar" id="bulk-bar" hidden>
+        <span class="bulk-count"><strong id="bulk-count">0</strong> sélectionné(s)</span>
+        <button class="btn" type="button" id="bulk-clear">Désélectionner</button>
+        <span class="bulk-spacer"></span>
+        <button class="btn" type="button" id="bulk-edit-open">✎ Modifier</button>
+        <button class="btn btn-danger" type="submit" name="action" value="delete" id="bulk-delete">✕ Supprimer</button>
+      </div>
+
+      <dialog class="modal" id="bulk-dialog" aria-labelledby="bulk-title">
+        <div class="modal-body form">
+          <header>
+            <h2 id="bulk-title">Modifier <span id="bulk-count-2">0</span> étudiant(s)</h2>
+            <p class="muted small">Seuls les champs renseignés sont appliqués à tous les étudiants sélectionnés. Le reste est conservé.</p>
+          </header>
+
+          <h3>Parcours</h3>
+          <p class="muted small">Changer la classe recalcule la cohorte, et donc les cours et le groupe Moodle. Complétez toute la chaîne ou laissez vide.</p>
+          <div class="grid-2">
+            <label class="field"><span>Section</span>
+              <select name="section_id"><option value="">— Inchangé —</option></select></label>
+            <label class="field"><span>Cycle</span>
+              <select name="cycle_id" disabled><option value="">— Inchangé —</option></select></label>
+            <label class="field"><span>Niveau</span>
+              <select name="level_id" disabled><option value="">— Inchangé —</option></select></label>
+            <label class="field"><span>Classe</span>
+              <select name="class_id" disabled><option value="">— Inchangé —</option></select></label>
+          </div>
+
+          <h3>Export &amp; accès</h3>
+          <div class="grid-2">
+            <label class="field"><span>Statut d'export</span>
+              <select name="export_status">
+                <option value="keep">— Inchangé —</option>
+                <option value="new">Repasser en « Nouveau »</option>
+                <option value="exported">Marquer « Exporté »</option>
+              </select></label>
+            <label class="check" style="align-self:end;padding-bottom:.9rem">
+              <input type="checkbox" name="regen_password" value="1"> Générer un nouveau mot de passe pour chacun</label>
+          </div>
+
+          <div class="export">
+            <button class="btn" type="button" id="bulk-cancel">Annuler</button>
+            <button class="btn btn-primary" type="submit" name="action" value="edit">Appliquer à la sélection</button>
+          </div>
+        </div>
+      </dialog>
+    </form>
+
     <div class="table-wrap">
       <table>
         <thead><tr>
+          <th class="col-check"><input type="checkbox" id="check-all" aria-label="Tout sélectionner sur cette page"></th>
           <th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Mot de passe</th><th>Cohorte</th><th>Cours / groupe Moodle</th><th>Export</th><th></th>
         </tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr>
+            <td class="col-check"><input type="checkbox" class="row-check" name="ids[]" value="<?= (int)$r['id'] ?>" form="bulk-form" aria-label="Sélectionner <?= e($r['lastname']) ?>"></td>
             <td><code><?= e($r['username']) ?></code></td>
             <td><strong><?= e($r['lastname']) ?></strong> <?= e($r['firstname']) ?></td>
             <td><?= e($r['email']) ?></td>
@@ -126,7 +182,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
           </tr>
         <?php endforeach; ?>
         <?php if (!$rows): ?>
-          <tr><td colspan="8" class="empty">Aucun étudiant pour ces critères.</td></tr>
+          <tr><td colspan="9" class="empty">Aucun étudiant pour ces critères.</td></tr>
         <?php endif; ?>
         </tbody>
       </table>
@@ -145,5 +201,6 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <script>window.__flash = <?= json_encode(flash_pull(), JSON_UNESCAPED_UNICODE) ?>;</script>
 <script src="../assets/app.js"></script>
+<script src="../assets/admin-bulk.js"></script>
 </body>
 </html>
