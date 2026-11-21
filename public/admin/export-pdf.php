@@ -114,6 +114,7 @@ $payload = [
   </a>
   <nav>
     <a class="link small" href="./index.php">Inscription étudiant</a>
+    <a class="link small" href="./cohorts.php">Cohortes</a>
     <a class="link small" href="./cohort-subjects.php" aria-current="page">Matières par cohorte</a>
     <a class="link small" href="./courses.php">Noms des cours</a>
     <span class="nav-sep" aria-hidden="true"></span>

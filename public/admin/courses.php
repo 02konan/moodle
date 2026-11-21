@@ -72,6 +72,7 @@ $nModified = count(array_intersect_key($overrides, $courses));
   <a class="brand" href="./index.php"><span class="brand-dot"></span> Moodle Admin</a>
   <nav>
     <a class="link small" href="./index.php">Accueil</a>
+    <a class="link small" href="./cohorts.php">Cohortes</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
     <a class="link small" href="./courses.php" aria-current="page">Noms des cours</a>
     <span class="nav-sep" aria-hidden="true"></span>

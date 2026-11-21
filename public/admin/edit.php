@@ -101,6 +101,7 @@ $levels = [
   <a class="brand" href="./index.php"><span class="brand-dot"></span> Moodle Admin</a>
   <nav>
     <a class="link small" href="./index.php" aria-current="page">Accueil</a>
+    <a class="link small" href="./cohorts.php">Cohortes</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
     <a class="link small" href="./courses.php">Noms des cours</a>
     <span class="nav-sep" aria-hidden="true"></span>

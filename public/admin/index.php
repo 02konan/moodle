@@ -50,6 +50,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
   </a>
   <nav>
     <a class="link small" href="./index.php" aria-current="page">Accueil</a>
+    <a class="link small" href="./cohorts.php">Cohortes</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
     <a class="link small" href="./courses.php">Noms des cours</a>
     <span class="nav-sep" aria-hidden="true"></span>
