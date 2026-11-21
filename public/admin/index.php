@@ -27,6 +27,7 @@ $st->execute($params);
 $rows = $st->fetchAll();
 
 $subjects = subjects_by_cohort($pdo);
+$overrides = course_overrides($pdo);
 $stats = $pdo->query('SELECT COUNT(*) total, SUM(exported_at IS NULL) fresh, COUNT(DISTINCT cohort) cohorts FROM students')->fetch();
 $cohorts = $pdo->query('SELECT cohort, SUM(exported_at IS NULL) n FROM students GROUP BY cohort ORDER BY cohort')->fetchAll();
 $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GET, $extra), fn($v) => $v !== '' && $v !== null));
@@ -50,6 +51,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
   <nav>
     <a class="link small" href="./index.php" aria-current="page">Accueil</a>
     <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
+    <a class="link small" href="./courses.php">Noms des cours</a>
     <span class="nav-sep" aria-hidden="true"></span>
     <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
     <a class="btn-logout small" href="./logout.php">Déconnexion</a>
@@ -104,7 +106,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
             <td class="muted"><?= e($r['password']) ?></td>
             <td><span class="pill"><?= e($r['cohort']) ?></span></td>
             <td class="small">
-              <?php $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects); ?>
+              <?php $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects, $overrides); ?>
               <?php if ($courses): ?>
                 <?= implode('<br>', array_map('e', $courses)) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span>
               <?php else: ?>

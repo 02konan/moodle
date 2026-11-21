@@ -7,7 +7,8 @@ declare(strict_types=1);
  *   cohorte « BTS-2-FC-03-ANY » + matières saisies dans « Matières par cohorte »
  *     → course1 = « BTS 2 FC: MATHÉMATIQUES GÉNÉRALES »   group1 = « GP/BTS-2-FC-03-ANY »
  *     → course2 = « BTS 2 FC: COMPTABILITÉ »              group2 = « GP/BTS-2-FC-03-ANY »
- * Le nom du cours doit être identique au nom abrégé dans Moodle.
+ * Le nom du cours doit être identique au nom abrégé dans Moodle ; sinon, le remplacer
+ * dans « Noms des cours » (table course_overrides).
  * Le groupe est créé par Moodle dans chaque cours s'il n'existe pas.
  */
 
@@ -40,11 +41,23 @@ function moodle_course_name(string $prefix, string $subject): string
     return $prefix . ': ' . mb_strtoupper($subject, 'UTF-8');
 }
 
-/** Cours de la cohorte, un par matière affectée. */
-function moodle_courses_for(string $cohort, string $sectionCode, array $subjectsByCohort): array
+/** Noms générés automatiquement pour la cohorte, un par matière affectée. */
+function moodle_auto_courses_for(string $cohort, string $sectionCode, array $subjectsByCohort): array
 {
     $prefix = moodle_course_prefix($cohort, $sectionCode);
     return array_map(fn($s) => moodle_course_name($prefix, $s), $subjectsByCohort[$cohort] ?? []);
+}
+
+/** Cours de la cohorte, avec les noms personnalisés appliqués. */
+function moodle_courses_for(string $cohort, string $sectionCode, array $subjectsByCohort, array $overrides = []): array
+{
+    return array_map(fn($n) => $overrides[$n] ?? $n, moodle_auto_courses_for($cohort, $sectionCode, $subjectsByCohort));
+}
+
+/** ['BTS 2 FC: MATHÉMATIQUES GÉNÉRALES' => 'BTS 2 FCGE: MATHÉMATIQUES GÉNÉRALES', ...] */
+function course_overrides(PDO $pdo): array
+{
+    return $pdo->query('SELECT auto_name, moodle_name FROM course_overrides')->fetchAll(PDO::FETCH_KEY_PAIR);
 }
 
 /** ['BTS-2-FC-03-ANY' => ['COMPTABILITÉ', 'MATHÉMATIQUES GÉNÉRALES'], ...] */
