@@ -395,3 +395,23 @@ tbody tr:hover { background: var(--soft); }
   flex-wrap: wrap;
 }
 .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* ===== Actions de masse (index) ===== */
+.col-check { width: 44px; padding-right: 0; }
+.col-check input { width: 18px; height: 18px; accent-color: var(--accent); box-shadow: none; padding: 0; cursor: pointer; }
+tbody tr.is-selected { background: var(--soft); }
+.bulk-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--white); border-radius: var(--radius);
+  box-shadow: 0 0 0 2px var(--ink); animation: rise .35s var(--ease) both;
+}
+.bulk-bar[hidden] { display: none !important; }
+.bulk-spacer { flex: 1; }
+.btn-danger { background: var(--ink); color: var(--white); box-shadow: none; }
+.btn-danger:hover { box-shadow: 0 10px 24px rgba(17,17,17,.3); }
+.modal { border: 0; padding: 0; border-radius: calc(var(--radius) + 6px); width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 32px); background: var(--soft); color: var(--ink); box-shadow: 0 30px 80px rgba(17,17,17,.35); }
+.modal::backdrop { background: rgba(15,23,42,.4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.modal[open] { animation: pop .3s var(--ease) both; }
+.modal-body { padding: clamp(18px, 4vw, 30px); }
+.modal-body h3 { font-size: 1.05rem; font-weight: 600; }
+.modal-body header { display: grid; gap: 6px; }
