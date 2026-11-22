@@ -9,11 +9,11 @@ declare(strict_types=1);
   </main>
 
   <div id="toasts" class="toasts" aria-live="polite"></div>
-  <script src="../assets/app.js"></script>
-  <script src="../assets/admin-ajax.js"></script>
-  <script src="../assets/admin-bulk.js"></script>
-  <script src="../assets/admin-edit.js"></script>
-  <script src="../assets/cohort-subjects.js"></script>
-  <script src="../assets/cohort-pdf.js"></script>
+  <script src="<?= e(asset('app.js')) ?>"></script>
+  <script src="<?= e(asset('admin-ajax.js')) ?>"></script>
+  <script src="<?= e(asset('admin-bulk.js')) ?>"></script>
+  <script src="<?= e(asset('admin-edit.js')) ?>"></script>
+  <script src="<?= e(asset('cohort-subjects.js')) ?>"></script>
+  <script src="<?= e(asset('cohort-pdf.js')) ?>"></script>
 </body>
 </html>

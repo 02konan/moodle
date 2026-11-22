@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
+  <link rel="stylesheet" href="<?= e(asset('app.css')) ?>">
 </head>
 <body class="auth-body">
   <main class="auth-card reveal">
@@ -58,6 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </main>
   <div id="toasts" class="toasts" aria-live="polite"></div>
   <script>window.__flash = <?= json_encode($error ? [['message' => $error, 'type' => 'error']] : [], JSON_UNESCAPED_UNICODE) ?>;</script>
-  <script src="../assets/app.js"></script>
+  <script src="<?= e(asset('app.js')) ?>"></script>
 </body>
 </html>

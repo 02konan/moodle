@@ -48,6 +48,16 @@ function db(): PDO
     return $pdo;
 }
 
+/**
+ * URL d'un fichier de public/assets avec sa date de modification (?v=…) :
+ * après un déploiement, le navigateur recharge le fichier au lieu d'utiliser son cache.
+ */
+function asset(string $path, string $prefix = '../assets/'): string
+{
+    $file = ROOT . '/public/assets/' . $path;
+    return $prefix . $path . (is_file($file) ? '?v=' . filemtime($file) : '');
+}
+
 function e(?string $s): string
 {
     return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
