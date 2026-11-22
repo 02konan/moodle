@@ -24,32 +24,11 @@ usort($cohorts, fn($a, $b) => strnatcasecmp($a['cohort'], $b['cohort']));
 
 $totalStudents = array_sum(array_column($cohorts, 'n'));
 $totalFresh    = array_sum(array_column($cohorts, 'fresh'));
+$pageTitle = 'Cohortes';
+$active = 'cohorts';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cohortes — Backoffice</title>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body class="admin-body">
 
-<header class="topbar">
-  <a class="brand" href="./index.php"><span class="brand-dot"></span> Moodle Admin</a>
-  <nav>
-    <a class="link small" href="./index.php">Accueil</a>
-    <a class="link small" href="./cohorts.php" aria-current="page">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./courses.php">Noms des cours</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
-
-<main class="admin">
   <header class="reveal page-head">
     <div>
       <h1>Cohortes</h1>
@@ -64,8 +43,8 @@ $totalFresh    = array_sum(array_column($cohorts, 'fresh'));
   </section>
 
   <section class="panel reveal" style="--d:.18s">
-    <form class="filters" method="get">
-      <input type="search" name="q" placeholder="Rechercher une cohorte, une section, une classe" value="<?= e($q) ?>">
+    <form class="filters" method="get" data-live-form role="search">
+      <input type="search" name="q" data-live autocomplete="off" placeholder="Rechercher une cohorte, une section, une classe" value="<?= e($q) ?>">
       <button class="btn" type="submit">Rechercher</button>
       <?php if ($q !== ''): ?><a class="btn" href="./cohorts.php">Tout afficher</a><?php endif; ?>
     </form>
@@ -104,13 +83,4 @@ $totalFresh    = array_sum(array_column($cohorts, 'fresh'));
       </table>
     </div>
   </section>
-</main>
-
-<div id="toasts" class="toasts" aria-live="polite"></div>
-<script src="../assets/app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="../assets/cohort-pdf.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

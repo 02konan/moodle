@@ -2,12 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
 
-/* -------- Auth (à adapter) -------- */
-if (session_status() === PHP_SESSION_NONE) session_start();
-if (empty($_SESSION['admin_id'])) {
-    header('Location: ./login.php');
-    exit;
-}
+require_admin();
 
 $pdo = db();
 
@@ -127,17 +122,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $flash[] = ['message' => $ex->getMessage(), 'type' => 'error'];
     }
 
-    $_SESSION['cs_flash'] = $flash;
-    header('Location: ?cohort=' . urlencode($cohort));
-    exit;
+    foreach ($flash as $f) flash($f['message'], $f['type']);
+    redirect('./cohort-subjects.php?cohort=' . urlencode($cohort));
 }
 
 /* =========================================================
    LECTURE
    ========================================================= */
-$flash = $_SESSION['cs_flash'] ?? [];
-unset($_SESSION['cs_flash']);
-
 $cohorts = $pdo->query("
     SELECT s.cohort,
            COUNT(DISTINCT s.id) AS n_students,
@@ -147,7 +138,15 @@ $cohorts = $pdo->query("
     ORDER BY s.cohort
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+// Cohorte saisie dans la liste de suggestions : nom exact, sinon première cohorte qui contient le texte
 $selectedCohort = trim((string)($_GET['cohort'] ?? ''));
+$names = array_column($cohorts, 'cohort');
+if ($selectedCohort !== '' && !in_array($selectedCohort, $names, true)) {
+    $needle = ascii($selectedCohort);
+    $match = array_values(array_filter($names, fn($n) => str_contains(ascii($n), $needle)));
+    if ($match) $selectedCohort = $match[0];
+    else { flash("Aucune cohorte ne correspond à « {$selectedCohort} ».", 'error'); $selectedCohort = ''; }
+}
 if ($selectedCohort === '' && $cohorts) $selectedCohort = $cohorts[0]['cohort'];
 
 $editRow = null;
@@ -181,54 +180,22 @@ $suggestedSubjects = $pdo->query("SELECT label FROM subjects ORDER BY label")->f
 $allTeachers       = $pdo->query("SELECT fullname, phone FROM teachers ORDER BY fullname")->fetchAll(PDO::FETCH_ASSOC);
 $suggestedTeachers = array_column($allTeachers, 'fullname');
 $teacherPhoneMap   = array_column($allTeachers, 'phone', 'fullname'); // fullname => phone
+$pageTitle = 'Matières par cohorte';
+$active = 'subjects';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="csrf" content="<?= e(csrf_token()) ?>">
-  <title>Matières par cohorte — Backoffice</title>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body class="admin-body">
 
-<header class="topbar">
-  <a class="brand" href="./index.php">
-    <span class="brand-dot"></span> Moodle Admin
-  </a>
-  <nav>
-    <a class="link small" href="./index.php">Inscription étudiant</a>
-    <a class="link small" href="./cohorts.php">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php" aria-current="page">Matières par cohorte</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
-
-<main class="admin">
 
   <header class="reveal page-head">
   <div>
     <h1>Matières par cohorte</h1>
     <p class="muted">Pour chaque cohorte, renseignez les matières enseignées, l'enseignant qui les dispense et son numéro.</p>
   </div>
-  <a class="btn btn-primary" href="./export-pdf.php" rel="noopener">
+  <a class="btn btn-primary" href="./export-pdf.php" rel="noopener" data-no-async>
     Exporter le récapitulatif PDF
   </a>
 </header>
 
-  <?php if ($flash): ?>
-    <div class="flash reveal">
-      <?php foreach ($flash as $f): ?>
-        <p class="<?= $f['type'] === 'error' ? 'err' : '' ?>">
-          <span class="dot"></span><?= e($f['message']) ?>
-        </p>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
 
   <?php if (!$cohorts): ?>
     <section class="panel">
@@ -241,21 +208,23 @@ $teacherPhoneMap   = array_column($allTeachers, 'phone', 'fullname'); // fullnam
       <form method="get" class="filters">
         <label class="field" style="flex:1;">
           <span>Cohorte</span>
-          <select name="cohort" onchange="this.form.submit()">
+          <input name="cohort" list="cohorts-list" value="<?= e($selectedCohort) ?>" autocomplete="off"
+                 placeholder="Tapez ou choisissez une cohorte" onfocus="this.select()" data-submit-on-change>
+          <datalist id="cohorts-list">
             <?php foreach ($cohorts as $c): ?>
-              <option value="<?= e($c['cohort']) ?>" <?= $c['cohort'] === $selectedCohort ? 'selected' : '' ?>>
-                <?= e($c['cohort']) ?>
-              </option>
+              <option value="<?= e($c['cohort']) ?>"><?= (int)$c['n_students'] ?> étudiant(s) · <?= (int)$c['n_subjects'] ?> matière(s)</option>
             <?php endforeach; ?>
-          </select>
+          </datalist>
         </label>
+        <button class="btn" type="submit" style="align-self:end">Afficher</button>
       </form>
     </section>
 
     <!-- Formulaire ajout / modification -->
     <section class="panel reveal">
       <h2><?= $editRow ? 'Modifier une matière' : 'Ajouter une matière' ?></h2>
-      <form method="post" class="form">
+      <form method="post" class="form" id="subject-form" action="./cohort-subjects.php"
+            data-teacher-phones='<?= json_encode($teacherPhoneMap, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) ?>'>
         <input type="hidden" name="csrf"   value="<?= e(csrf_token()) ?>">
         <input type="hidden" name="action" value="<?= $editRow ? 'update' : 'add' ?>">
         <input type="hidden" name="cohort" value="<?= e($selectedCohort) ?>">
@@ -347,7 +316,7 @@ $teacherPhoneMap   = array_column($allTeachers, 'phone', 'fullname'); // fullnam
                 <td><?= $r['hours'] !== null ? (int)$r['hours'] . ' h' : '<span class="muted">—</span>' ?></td>
                 <td style="text-align:right; white-space:nowrap;">
                   <a class="btn" href="?cohort=<?= urlencode($selectedCohort) ?>&edit=<?= (int)$r['id'] ?>">Modifier</a>
-                  <form method="post" style="display:inline;"
+                  <form method="post" action="./cohort-subjects.php" style="display:inline;"
                         onsubmit="return confirm('Retirer cette matière de la cohorte ?');">
                     <input type="hidden" name="csrf"   value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="action" value="delete">
@@ -364,36 +333,4 @@ $teacherPhoneMap   = array_column($allTeachers, 'phone', 'fullname'); // fullnam
     </section>
 
   <?php endif; ?>
-</main>
-
-<script>
-(() => {
-  'use strict';
-  const teacherPhones = <?= json_encode($teacherPhoneMap, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP|JSON_UNESCAPED_UNICODE) ?>;
-
-  const form = document.querySelector('form.form');
-  if (!form) return;
-  const teacherInput = form.querySelector('input[name="teacher"]');
-  const phoneInput   = form.querySelector('input[name="phone"]');
-  if (!teacherInput || !phoneInput) return;
-
-  // Détecte si l'utilisateur a saisi un téléphone "manuellement"
-  let phoneTouched = phoneInput.value.trim() !== '';
-  phoneInput.addEventListener('input', () => { phoneTouched = phoneInput.value.trim() !== ''; });
-
-  // Quand l'enseignant change : si connu, on auto-remplit le téléphone (sauf si l'utilisateur l'a modifié)
-  teacherInput.addEventListener('input', () => {
-    if (phoneTouched) return;
-    const name = teacherInput.value.trim();
-    if (name === '') { phoneInput.value = ''; return; }
-    // matching insensible à la casse/accents côté client
-    const found = Object.keys(teacherPhones).find(
-      (k) => k.localeCompare(name, 'fr', { sensitivity: 'base' }) === 0
-    );
-    if (found) phoneInput.value = teacherPhones[found] || '';
-  });
-})();
-</script>
-
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

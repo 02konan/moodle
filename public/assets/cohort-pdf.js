@@ -78,10 +78,23 @@
   const stamp = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}h${pad(d.getMinutes())}`; };
   const fileName = (cohort, ts) => `${cohort.replace(/[^A-Za-z0-9._-]+/g, '_')}-${ts}.pdf`;
 
-  function ready(needZip) {
-    if (!window.jspdf?.jsPDF || !window.jspdf.jsPDF.API.autoTable) { notify('Librairie PDF indisponible : vérifiez la connexion et rechargez la page.'); return false; }
-    if (needZip && !window.JSZip) { notify('Librairie ZIP indisponible : vérifiez la connexion et rechargez la page.'); return false; }
-    return true;
+  /* ---------- Librairies chargées à la demande (premier export) ---------- */
+  const CDN = {
+    jspdf:     'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+    autotable: 'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js',
+    jszip:     'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+  };
+  const loaded = {};
+  const loadScript = (src) => (loaded[src] ??= new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res;
+    s.onerror = () => { delete loaded[src]; rej(new Error('Librairie indisponible : vérifiez la connexion et réessayez.')); };
+    document.head.appendChild(s);
+  }));
+  async function ready(needZip) {
+    if (!window.jspdf?.jsPDF) await loadScript(CDN.jspdf);
+    if (!window.jspdf.jsPDF.API.autoTable) await loadScript(CDN.autotable);
+    if (needZip && !window.JSZip) await loadScript(CDN.jszip);
   }
 
   async function busy(btn, fn) {
@@ -96,8 +109,8 @@
     const btn = e.target.closest('[data-pdf-cohort]');
     if (!btn) return;
     e.preventDefault();
-    if (!ready(false)) return;
     busy(btn, async () => {
+      await ready(false);
       const [data, logo] = await Promise.all([fetchCohorts([btn.dataset.pdfCohort]), loadLogo()]);
       if (!data.cohorts.length) throw new Error('Cette cohorte ne contient aucun étudiant.');
       buildPdf(data.cohorts[0], data.generated, logo).save(fileName(data.cohorts[0].cohort, stamp()));
@@ -105,8 +118,10 @@
   });
 
   /* ---------- Export de masse : un PDF par cohorte, regroupés dans un ZIP ---------- */
+  function init() {
   const bulkBtn = document.getElementById('cohort-bulk-export');
-  if (!bulkBtn) return;
+  if (!bulkBtn || bulkBtn.dataset.ready) return;
+  bulkBtn.dataset.ready = '1';
   const rows = () => [...document.querySelectorAll('input.cohort-check')];
   const picked = () => rows().filter((c) => c.checked).map((c) => c.value);
   const checkAll = document.getElementById('cohort-check-all');
@@ -121,14 +136,15 @@
     if (checkAll) { checkAll.checked = all.length > 0 && sel.length === all.length; checkAll.indeterminate = sel.length > 0 && sel.length < all.length; }
   }
   checkAll?.addEventListener('change', () => { rows().forEach((c) => { c.checked = checkAll.checked; }); refresh(); });
-  document.addEventListener('change', (e) => { if (e.target.matches('input.cohort-check')) refresh(); });
+  rows().forEach((c) => c.addEventListener('change', refresh));
   document.getElementById('cohort-bulk-clear')?.addEventListener('click', () => { rows().forEach((c) => { c.checked = false; }); refresh(); });
   refresh();
 
   bulkBtn.addEventListener('click', () => {
     const names = picked();
-    if (!names.length || !ready(names.length > 1)) return;
+    if (!names.length) return;
     busy(bulkBtn, async () => {
+      await ready(names.length > 1);
       const [data, logo] = await Promise.all([fetchCohorts(names), loadLogo()]);
       if (!data.cohorts.length) throw new Error('Aucun étudiant dans les cohortes sélectionnées.');
       if (data.cohorts.length === 1) {
@@ -147,4 +163,8 @@
       notify(`${data.cohorts.length} listes PDF téléchargées (fichier ZIP).`, 'success');
     });
   });
+  }
+
+  document.addEventListener('app:load', init);
+  init();
 })();

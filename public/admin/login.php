@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($admin && password_verify((string)($_POST['password'] ?? ''), $admin['password_hash'])) {
             session_regenerate_id(true);
             $_SESSION['admin_id'] = (int)$admin['id'];
+            $_SESSION['admin_email'] = mb_strtolower(trim((string)$_POST['email']));
             unset($_SESSION['login_fails'], $_SESSION['login_lock']);
             header('Location: ./');
             exit;

@@ -31,36 +31,11 @@ $overrides = course_overrides($pdo);
 $stats = $pdo->query('SELECT COUNT(*) total, SUM(exported_at IS NULL) fresh, COUNT(DISTINCT cohort) cohorts FROM students')->fetch();
 $cohorts = $pdo->query('SELECT cohort, SUM(exported_at IS NULL) n FROM students GROUP BY cohort ORDER BY cohort')->fetchAll();
 $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GET, $extra), fn($v) => $v !== '' && $v !== null));
+$pageTitle = 'Étudiants';
+$active = 'students';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Backoffice — Inscriptions Moodle</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body>
-  <header class="topbar">
-  <a class="brand" href="./index.php">
-    <span class="brand-dot"></span> Moodle Admin
-  </a>
-  <nav>
-    <a class="link small" href="./index.php" aria-current="page">Accueil</a>
-    <a class="link small" href="./cohorts.php">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./courses.php">Noms des cours</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
 
-
-<main class="admin">
   <section class="stats">
     <div class="stat reveal"><span class="stat-n"><?= (int)$stats['total'] ?></span><span class="muted">Étudiants</span></div>
     <div class="stat reveal" style="--d:.06s"><span class="stat-n"><?= (int)$stats['fresh'] ?></span><span class="muted">Pas encore exportés</span></div>
@@ -68,23 +43,29 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
   </section>
 
   <section class="panel reveal" style="--d:.18s">
-    <form class="filters" method="get">
-      <input type="search" name="q" placeholder="Rechercher nom, e-mail, identifiant" value="<?= e($_GET['q'] ?? '') ?>">
-      <select name="cohort">
-        <option value="">Toutes les cohortes</option>
+    <form class="filters" method="get" data-live-form role="search">
+      <input type="search" name="q" data-live autocomplete="off" aria-label="Rechercher un étudiant"
+             placeholder="Nom complet, identifiant, e-mail, cohorte…" value="<?= e($_GET['q'] ?? '') ?>">
+      <input name="cohort" list="cohort-list" data-live autocomplete="off" aria-label="Filtrer par cohorte"
+             placeholder="Toutes les cohortes" value="<?= e($_GET['cohort'] ?? '') ?>">
+      <datalist id="cohort-list">
         <?php foreach ($cohorts as $c): ?>
-          <option value="<?= e($c['cohort']) ?>" <?= ($_GET['cohort'] ?? '') === $c['cohort'] ? 'selected' : '' ?>><?= e($c['cohort']) ?> (<?= (int)$c['n'] ?>)</option>
+          <option value="<?= e($c['cohort']) ?>"><?= (int)$c['n'] ?> non exporté(s)</option>
         <?php endforeach; ?>
-      </select>
-      <select name="status">
-        <?php foreach (['' => 'Tous les statuts', 'new' => 'Non exportés', 'exported' => 'Déjà exportés'] as $v => $l): ?>
-          <option value="<?= $v ?>" <?= ($_GET['status'] ?? '') === $v ? 'selected' : '' ?>><?= $l ?></option>
-        <?php endforeach; ?>
-      </select>
+      </datalist>
+      <input name="status" list="status-list" data-live autocomplete="off" aria-label="Filtrer par statut"
+             placeholder="Tous les statuts" value="<?= e($_GET['status'] ?? '') ?>">
+      <datalist id="status-list">
+        <option value="Non exportés"></option>
+        <option value="Déjà exportés"></option>
+      </datalist>
       <button class="btn" type="submit">Filtrer</button>
+      <?php if (array_filter([$_GET['q'] ?? '', $_GET['cohort'] ?? '', $_GET['status'] ?? ''])): ?>
+        <a class="btn" href="./index.php">Effacer</a>
+      <?php endif; ?>
     </form>
 
-    <form class="export" method="post" action="./export.php">
+    <form class="export" method="post" action="./export.php" data-no-async>
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="q" value="<?= e($_GET['q'] ?? '') ?>">
       <input type="hidden" name="cohort" value="<?= e($_GET['cohort'] ?? '') ?>">
@@ -151,7 +132,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
       <table>
         <thead><tr>
           <th class="col-check"><input type="checkbox" id="check-all" aria-label="Tout sélectionner sur cette page"></th>
-          <th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Mot de passe</th><th>Cohorte</th><th>Cours / groupe Moodle</th><th>Export</th><th></th>
+          <th>Identifiant</th><th>Nom</th><th>Mot de passe</th><th>Cohorte</th><th>Cours / groupe Moodle</th><th>Export</th><th></th>
         </tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
@@ -159,10 +140,9 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
             <td class="col-check"><input type="checkbox" class="row-check" name="ids[]" value="<?= (int)$r['id'] ?>" form="bulk-form" aria-label="Sélectionner <?= e($r['lastname']) ?>"></td>
             <td><code><?= e($r['username']) ?></code></td>
             <td><strong><?= e($r['lastname']) ?></strong> <?= e($r['firstname']) ?></td>
-            <td><?= e($r['email']) ?></td>
             <td class="muted"><?= e($r['password']) ?></td>
             <td><span class="pill"><?= e($r['cohort']) ?></span></td>
-            <td class="small">
+            <td class="small col-courses">
               <?php $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects, $overrides); ?>
               <?php if ($courses): ?>
                 <?= implode('<br>', array_map('e', $courses)) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span>
@@ -183,7 +163,7 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
           </tr>
         <?php endforeach; ?>
         <?php if (!$rows): ?>
-          <tr><td colspan="9" class="empty">Aucun étudiant pour ces critères.</td></tr>
+          <tr><td colspan="8" class="empty">Aucun étudiant pour ces critères.</td></tr>
         <?php endif; ?>
         </tbody>
       </table>
@@ -197,11 +177,4 @@ $query = fn(array $extra = []) => http_build_query(array_filter(array_merge($_GE
       </nav>
     <?php endif; ?>
   </section>
-</main>
-
-<div id="toasts" class="toasts" aria-live="polite"></div>
-<script>window.__flash = <?= json_encode(flash_pull(), JSON_UNESCAPED_UNICODE) ?>;</script>
-<script src="../assets/app.js"></script>
-<script src="../assets/admin-bulk.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

@@ -32,8 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
         flash($changed ? "$changed nom(s) de cours mis à jour." : 'Aucune modification.', $changed ? 'success' : 'info');
     }
-    header('Location: ./courses.php' . (isset($_POST['q']) && $_POST['q'] !== '' ? '?q=' . urlencode((string)$_POST['q']) : ''));
-    exit;
+    redirect('./courses.php' . (isset($_POST['q']) && $_POST['q'] !== '' ? '?q=' . urlencode((string)$_POST['q']) : ''));
 }
 
 /* Tous les cours générés à partir des cohortes existantes et de leurs matières */
@@ -56,32 +55,11 @@ if ($q !== '') {
     $courses = array_filter($courses, fn($v, $k) => str_contains(ascii($k . ' ' . ($overrides[$k] ?? '')), $needle), ARRAY_FILTER_USE_BOTH);
 }
 $nModified = count(array_intersect_key($overrides, $courses));
+$pageTitle = 'Noms des cours';
+$active = 'courses';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Noms des cours — Backoffice</title>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body class="admin-body">
 
-<header class="topbar">
-  <a class="brand" href="./index.php"><span class="brand-dot"></span> Moodle Admin</a>
-  <nav>
-    <a class="link small" href="./index.php">Accueil</a>
-    <a class="link small" href="./cohorts.php">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./courses.php" aria-current="page">Noms des cours</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
-
-<main class="admin">
   <header class="reveal page-head">
     <div>
       <h1>Noms des cours Moodle</h1>
@@ -91,8 +69,8 @@ $nModified = count(array_intersect_key($overrides, $courses));
   </header>
 
   <section class="panel reveal">
-    <form method="get" class="filters">
-      <input type="search" name="q" placeholder="Rechercher un cours (ex. FC, mathématiques)" value="<?= e($q) ?>">
+    <form method="get" class="filters" data-live-form role="search">
+      <input type="search" name="q" data-live autocomplete="off" placeholder="Rechercher un cours (ex. FC, mathématiques)" value="<?= e($q) ?>">
       <button class="btn" type="submit">Rechercher</button>
       <?php if ($q !== ''): ?><a class="btn" href="./courses.php">Tout afficher</a><?php endif; ?>
     </form>
@@ -131,10 +109,4 @@ $nModified = count(array_intersect_key($overrides, $courses));
       </form>
     <?php endif; ?>
   </section>
-</main>
-
-<div id="toasts" class="toasts" aria-live="polite"></div>
-<script>window.__flash = <?= json_encode(flash_pull(), JSON_UNESCAPED_UNICODE) ?>;</script>
-<script src="../assets/app.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

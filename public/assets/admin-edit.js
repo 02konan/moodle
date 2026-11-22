@@ -1,8 +1,11 @@
 // Modification d'un étudiant : listes en cascade section → cycle → niveau → classe.
+// Réinitialisé à chaque chargement de contenu (événement « app:load » d'admin-ajax.js).
 (() => {
   'use strict';
+  function init() {
   const form = document.getElementById('edit-form');
-  if (!form) return;
+  if (!form || form.dataset.ready) return;
+  form.dataset.ready = '1';
 
   const chain = [
     { name: 'section_id', type: 'sections', params: () => ({}) },
@@ -64,4 +67,8 @@
       sel(missing.name).focus();
     }
   });
+  }
+
+  document.addEventListener('app:load', init);
+  init();
 })();

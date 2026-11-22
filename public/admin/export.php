@@ -7,7 +7,7 @@ require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_valid($_POST['csrf'] ?? null)) {
     flash('Requête invalide.', 'error');
-    header('Location: /admin/');
+    header('Location: ./');
     exit;
 }
 
@@ -20,7 +20,7 @@ $rows = $st->fetchAll();
 
 if (!$rows) {
     flash('Aucun étudiant à exporter.', 'error');
-    header('Location: /admin/');
+    header('Location: ./');
     exit;
 }
 

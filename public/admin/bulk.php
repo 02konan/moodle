@@ -12,8 +12,7 @@ $back    = (string)($_POST['back'] ?? '');
 $backUrl = './' . ($back !== '' ? '?' . $back : '');
 $done = function (string $msg, string $type) use ($backUrl): never {
     flash($msg, $type);
-    header('Location: ' . $backUrl);
-    exit;
+    redirect($backUrl);
 };
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') $done('Requête invalide.', 'error');

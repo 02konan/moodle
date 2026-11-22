@@ -1,0 +1,145 @@
+// Backoffice : navigation et formulaires en asynchrone (fetch).
+// Les liens et formulaires internes sont envoyés avec fetch ; seul <main id="app"> est remplacé.
+// Réponses possibles du serveur : une page HTML (on remplace le contenu) ou du JSON
+// { redirect, flash } (on affiche les messages puis on charge l'URL indiquée).
+// Exclure un lien ou un formulaire : attribut data-no-async (téléchargements, déconnexion…).
+(() => {
+  'use strict';
+  const app = () => document.getElementById('app');
+  if (!app()) return;
+
+  const notify = (list) => (list || []).forEach((f, i) => setTimeout(() => window.toast?.(f.message, f.type), i * 250));
+  const sidebar = document.getElementById('sidebar');
+  let controller = null;
+
+  /* ---------- Sidebar mobile ---------- */
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-sidebar-toggle]')) document.body.classList.toggle('sidebar-open');
+  });
+
+  /* ---------- Initialisation d'un contenu (au chargement et après chaque remplacement) ---------- */
+  function pageLoaded(root) {
+    try { notify(JSON.parse(root.dataset.flash || '[]')); } catch { /* données absentes */ }
+    const active = root.dataset.active || '';
+    sidebar?.querySelectorAll('[data-nav]').forEach((a) => {
+      if (a.dataset.nav === active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    document.dispatchEvent(new CustomEvent('app:load', { detail: { root } }));
+  }
+
+  /* ---------- Requête + remplacement du contenu ---------- */
+  async function visit(url, { method = 'GET', body = null, history: hist = 'push', soft = false } = {}) {
+    controller?.abort();
+    controller = new AbortController();
+    document.body.classList.add('is-loading');
+    try {
+      const res = await fetch(url, {
+        method, body, signal: controller.signal, credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'fetch', Accept: 'text/html, application/json' },
+      });
+      const type = res.headers.get('content-type') || '';
+
+      if (type.includes('application/json')) {
+        const data = await res.json();
+        notify(data.flash);
+        if (data.error) window.toast?.(data.error, 'error');
+        if (data.redirect) return visit(new URL(data.redirect, res.url || url).href, { history: 'push' });
+        return;
+      }
+
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const next = doc.getElementById('app');
+      if (!next) { window.location.href = res.url || url; return; }   // page hors backoffice (connexion…)
+
+      swap(next, doc.title, soft);
+      if (hist === 'push') window.history.pushState({ async: true }, '', res.url || url);
+      else if (hist === 'replace') window.history.replaceState({ async: true }, '', res.url || url);
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      window.toast?.('Connexion impossible, réessayez.', 'error');
+    } finally {
+      document.body.classList.remove('is-loading');
+    }
+  }
+
+  function swap(next, title, soft) {
+    // Conserve le champ en cours de saisie (recherche en direct)
+    const focused = document.activeElement;
+    const keep = soft && focused?.name && app().contains(focused)
+      ? { name: focused.name, start: focused.selectionStart, end: focused.selectionEnd } : null;
+
+    const node = document.importNode(next, true);
+    if (soft) node.classList.add('no-anim');
+    app().replaceWith(node);
+    document.title = title;
+    document.body.classList.remove('sidebar-open');
+
+    // Les <script> insérés par innerHTML ne s'exécutent pas : on les recrée
+    node.querySelectorAll('script').forEach((old) => {
+      const s = document.createElement('script');
+      [...old.attributes].forEach((a) => s.setAttribute(a.name, a.value));
+      s.textContent = old.textContent;
+      old.replaceWith(s);
+    });
+
+    if (keep) {
+      const el = node.querySelector(`[name="${CSS.escape(keep.name)}"]`);
+      if (el) { el.focus(); try { el.setSelectionRange(keep.start, keep.end); } catch { /* type sans sélection */ } }
+    } else {
+      window.scrollTo({ top: 0 });
+    }
+    pageLoaded(node);
+  }
+
+  /* ---------- Interception des liens ---------- */
+  const internal = (url) => url.origin === location.origin && /\/admin\/[^/]*$/.test(url.pathname);
+
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (a.target || a.hasAttribute('download') || a.hasAttribute('data-no-async')) return;
+    const url = new URL(a.href, location.href);
+    if (!internal(url) || (url.hash && url.pathname === location.pathname && url.search === location.search)) return;
+    e.preventDefault();
+    visit(url.href);
+  });
+
+  /* ---------- Interception des formulaires ---------- */
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    if (e.defaultPrevented || form.hasAttribute('data-no-async') || form.target) return;
+    const url = new URL(form.getAttribute('action') || location.href, location.href);
+    if (!internal(url)) return;
+    e.preventDefault();
+
+    const data = new FormData(form, e.submitter || undefined);
+    if ((form.method || 'get').toLowerCase() === 'get') {
+      url.search = new URLSearchParams([...data].filter(([, v]) => v !== '')).toString();
+      const live = form.hasAttribute('data-live-form');   // recherche en direct : pas d'entrée d'historique par frappe
+      visit(url.href, { soft: live, history: live ? 'replace' : 'push' });
+    } else {
+      // POST : en cas de réponse HTML (erreurs de saisie), l'adresse affichée ne change pas
+      visit(url.href, { method: 'POST', body: data, history: 'none' });
+    }
+  });
+
+  /* ---------- Recherche et filtres en direct ---------- */
+  let timer = null;
+  document.addEventListener('input', (e) => {
+    const field = e.target.closest('[data-live]');
+    if (!field) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => field.form?.requestSubmit(), field.list ? 150 : 350);
+  });
+
+  // Listes de suggestions validées au choix (ou à la sortie du champ) plutôt qu'à chaque frappe
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('[data-submit-on-change]')) e.target.form?.requestSubmit();
+  });
+
+  window.addEventListener('popstate', () => visit(location.href, { history: 'none' }));
+
+  window.appVisit = visit;
+  pageLoaded(app());
+})();

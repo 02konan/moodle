@@ -84,9 +84,24 @@ function flash_pull(): array
     return $items;
 }
 
+/** Requête envoyée par fetch() depuis le backoffice (assets/admin-ajax.js). */
+function is_async(): bool
+{
+    return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch';
+}
+
+/** Redirection compatible fetch : en asynchrone, renvoie l'URL et les messages en JSON. */
+function redirect(string $url): never
+{
+    if (is_async()) json_out(['redirect' => $url, 'flash' => flash_pull()]);
+    header('Location: ' . $url);
+    exit;
+}
+
 function require_admin(): void
 {
     if (empty($_SESSION['admin_id'])) {
+        if (is_async()) json_out(['redirect' => '../admin/login.php', 'flash' => [['message' => 'Session expirée, reconnectez-vous.', 'type' => 'error']]], 401);
         header('Location: ../admin/login.php');
         exit;
     }
