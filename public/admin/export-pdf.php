@@ -110,8 +110,8 @@ require __DIR__ . '/../../includes/header.php';
     </div>
   </section>
 <?php if ($hasData): ?>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="<?= e(asset('vendor/jspdf.umd.min.js')) ?>"></script>
+<script src="<?= e(asset('vendor/jspdf.plugin.autotable.min.js')) ?>"></script>
 <script>
 (() => {
   'use strict';

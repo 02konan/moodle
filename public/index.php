@@ -12,7 +12,7 @@ require __DIR__ . '/../src/bootstrap.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/app.css">
+  <link rel="stylesheet" href="<?= e(asset('app.css', './assets/')) ?>">
 </head>
 <body class="student-body">
   <div class="shell">
@@ -64,7 +64,7 @@ require __DIR__ . '/../src/bootstrap.php';
 
     <div id="toasts" class="toasts" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="./assets/app.js"></script>
+  <script src="<?= e(asset('app.js', './assets/')) ?>"></script>
 
 </body>
 </html>

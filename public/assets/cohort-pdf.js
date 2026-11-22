@@ -79,10 +79,11 @@
   const fileName = (cohort, ts) => `${cohort.replace(/[^A-Za-z0-9._-]+/g, '_')}-${ts}.pdf`;
 
   /* ---------- Librairies chargées à la demande (premier export) ---------- */
+  // Hébergées dans assets/vendor (aucune dépendance à un CDN)
   const CDN = {
-    jspdf:     'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
-    autotable: 'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js',
-    jszip:     'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+    jspdf:     '../assets/vendor/jspdf.umd.min.js?v=2.5.1',
+    autotable: '../assets/vendor/jspdf.plugin.autotable.min.js?v=3.8.2',
+    jszip:     '../assets/vendor/jszip.min.js?v=3.10.1',
   };
   const loaded = {};
   const loadScript = (src) => (loaded[src] ??= new Promise((res, rej) => {

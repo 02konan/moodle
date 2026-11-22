@@ -31,7 +31,7 @@ $flashData = json_encode(flash_pull(), JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
+  <link rel="stylesheet" href="<?= e(asset('app.css')) ?>">
 </head>
 <body class="admin-layout">
   <div class="ajax-progress" aria-hidden="true"></div>
