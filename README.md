@@ -38,6 +38,7 @@ Puis ouvrir http://localhost:8080 (formulaire) et http://localhost:8080/admin/ (
 
 - `public/` : racine web (formulaire, `api/`, `admin/`, `assets/`)
 - `src/` : code partagé (configuration, référentiel, filtres, cours Moodle)
+- `includes/` : gabarit commun du backoffice (`header.php` : sidebar et ouverture de `<main>`, `footer.php` : fermeture et scripts)
 - `sql/` : schéma et migrations
 - `bin/` : scripts en ligne de commande (`migrate.php`, `create-admin.php`)
 - `docker/` : configuration Apache/PHP et script de démarrage

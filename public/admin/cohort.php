@@ -12,40 +12,18 @@ $st->execute([$cohort]);
 $students = $st->fetchAll();
 if ($cohort === '' || !$students) {
     flash('Cohorte introuvable.', 'error');
-    header('Location: ./cohorts.php');
-    exit;
+    redirect('./cohorts.php');
 }
 
 $first   = $students[0];
 $fresh   = count(array_filter($students, fn($s) => $s['exported_at'] === null));
 $courses = moodle_courses_for($cohort, $first['section_code'], subjects_by_cohort($pdo), course_overrides($pdo));
 $back    = http_build_query(['cohort' => $cohort]);   // retour vers la liste filtrée après modification
+$pageTitle = $cohort;
+$active = 'cohorts';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= e($cohort) ?> — Cohortes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body class="admin-body">
 
-<header class="topbar">
-  <a class="brand" href="./index.php"><span class="brand-dot"></span> Moodle Admin</a>
-  <nav>
-    <a class="link small" href="./index.php">Accueil</a>
-    <a class="link small" href="./cohorts.php" aria-current="page">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./courses.php">Noms des cours</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
-
-<main class="admin">
   <header class="reveal page-head">
     <div>
       <p class="muted small"><a class="link" href="./cohorts.php">← Toutes les cohortes</a></p>
@@ -95,13 +73,4 @@ $back    = http_build_query(['cohort' => $cohort]);   // retour vers la liste fi
       </table>
     </div>
   </section>
-</main>
-
-<div id="toasts" class="toasts" aria-live="polite"></div>
-<script>window.__flash = <?= json_encode(flash_pull(), JSON_UNESCAPED_UNICODE) ?>;</script>
-<script src="../assets/app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-<script src="../assets/cohort-pdf.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

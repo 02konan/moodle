@@ -2,12 +2,7 @@
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
 
-/* -------- Auth (à adapter) -------- */
-if (session_status() === PHP_SESSION_NONE) session_start();
-if (empty($_SESSION['admin_id'])) {
-    header('Location: ./login.php');
-    exit;
-}
+require_admin();
 
 $pdo = db();
 
@@ -95,35 +90,11 @@ $payload = [
     'generated' => date('d/m/Y à H:i'),
     'logo'      => $logoBase64,
 ];
+$pageTitle = 'Récapitulatif PDF';
+$active = 'subjects';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="csrf" content="<?= e(csrf_token()) ?>">
-  <title>Récapitulatif PDF — Matières par cohorte</title>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body class="admin-body">
 
-<header class="topbar">
-  <a class="brand" href="./index.php">
-    <span class="brand-dot"></span> Moodle Admin
-  </a>
-  <nav>
-    <a class="link small" href="./index.php">Inscription étudiant</a>
-    <a class="link small" href="./cohorts.php">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php" aria-current="page">Matières par cohorte</a>
-    <a class="link small" href="./courses.php">Noms des cours</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
-
-<main class="admin">
   <section class="panel" id="status-panel">
     <h1>Préparation du récapitulatif PDF</h1>
     <p class="muted" id="status-msg">
@@ -138,8 +109,6 @@ $payload = [
       <a class="btn" href="./cohort-subjects.php">Retour à la gestion</a>
     </div>
   </section>
-</main>
-
 <?php if ($hasData): ?>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -340,6 +309,4 @@ $payload = [
 })();
 </script>
 <?php endif; ?>
-
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

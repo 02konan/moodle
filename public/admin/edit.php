@@ -15,8 +15,7 @@ $st->execute([$id]);
 $student = $st->fetch();
 if (!$student) {
     flash('Étudiant introuvable.', 'error');
-    header('Location: ' . $backUrl);
-    exit;
+    redirect($backUrl);
 }
 
 $form   = $student;   // valeurs affichées
@@ -65,8 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg = "Étudiant {$identity['lastname']} {$identity['firstname']} modifié.";
                 if ($parcours && $parcours['cohort'] !== $student['cohort']) $msg .= " Nouvelle cohorte : {$parcours['cohort']}.";
                 flash($msg, 'success');
-                header('Location: ' . $backUrl);
-                exit;
+                redirect($backUrl);
             } catch (PDOException $ex) {
                 $dup = duplicate_error($ex);
                 if (!$dup) throw $ex;
@@ -75,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $error ??= 'Vérifiez les champs signalés.';
     }
+    flash($error, 'error');   // affiché en toast par le gabarit
 }
 
 $err = fn(string $k) => isset($errors[$k]) ? '<small class="err">' . e($errors[$k]) . '</small>' : '';
@@ -85,32 +84,11 @@ $levels = [
     'level_id'   => ['Niveau',  'level_label'],
     'class_id'   => ['Classe',  'class_label'],
 ];
+$pageTitle = 'Modifier un étudiant';
+$active = 'students';
+require __DIR__ . '/../../includes/header.php';
 ?>
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Modifier un étudiant — Backoffice</title>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/app.css">
-</head>
-<body class="admin-body">
 
-<header class="topbar">
-  <a class="brand" href="./index.php"><span class="brand-dot"></span> Moodle Admin</a>
-  <nav>
-    <a class="link small" href="./index.php" aria-current="page">Accueil</a>
-    <a class="link small" href="./cohorts.php">Cohortes</a>
-    <a class="link small" href="./cohort-subjects.php">Matières par cohorte</a>
-    <a class="link small" href="./courses.php">Noms des cours</a>
-    <span class="nav-sep" aria-hidden="true"></span>
-    <span class="nav-user small muted"><?= e($_SESSION['admin_email'] ?? 'Admin') ?></span>
-    <a class="btn-logout small" href="./logout.php">Déconnexion</a>
-  </nav>
-</header>
-
-<main class="admin">
   <header class="reveal page-head">
     <div>
       <h1>Modifier l'étudiant</h1>
@@ -161,11 +139,4 @@ $levels = [
       <a class="btn" href="<?= e($backUrl) ?>">Annuler</a>
     </div>
   </form>
-</main>
-
-<div id="toasts" class="toasts" aria-live="polite"></div>
-<script>window.__flash = <?= json_encode($error ? [['message' => $error, 'type' => 'error']] : [], JSON_UNESCAPED_UNICODE) ?>;</script>
-<script src="../assets/app.js"></script>
-<script src="../assets/admin-edit.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../../includes/footer.php'; ?>
