@@ -481,3 +481,52 @@ td .pill { white-space: nowrap; }
 .col-courses { width: 180px; min-width: 160px; font-size: .8rem; line-height: 1.35; }
 .table-wrap th, .table-wrap td { padding-left: 10px; padding-right: 10px; }
 .table-wrap th { white-space: normal; }
+
+/* =========================================================
+   Backoffice compact : cartes blanches, marges et polices réduites
+   (limité à .admin-layout : la page d'inscription n'est pas concernée)
+   ========================================================= */
+.admin-layout { font-size: 13px; line-height: 1.4; }
+.admin-layout .admin { padding: 12px 14px 24px; gap: 10px; max-width: none; }
+.admin-layout .stats { gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.admin-layout .stat,
+.admin-layout .panel { background: var(--white); box-shadow: 0 0 0 1px var(--soft-2); border-radius: 12px; }
+.admin-layout .stat { padding: 10px 12px; gap: 0; }
+.admin-layout .stat-n { font-size: 1.45rem; }
+.admin-layout .panel { padding: 10px 12px; gap: 10px; }
+.admin-layout .table-wrap { border-radius: 10px; box-shadow: 0 0 0 1px var(--soft-2); }
+.admin-layout h1 { font-size: 1.3rem; }
+.admin-layout h2 { font-size: 1rem; }
+.admin-layout h3, .admin-layout .modal-body h3 { font-size: .92rem; }
+.admin-layout .page-head { gap: .5rem; }
+.admin-layout .small { font-size: .8rem; }
+.admin-layout table { font-size: .82rem; }
+.admin-layout th { font-size: .66rem; padding-top: 8px; padding-bottom: 8px; }
+.admin-layout td { padding-top: 6px; padding-bottom: 6px; }
+.admin-layout .table-wrap th, .admin-layout .table-wrap td { padding-left: 8px; padding-right: 8px; }
+.admin-layout input, .admin-layout select, .admin-layout textarea { padding: .45rem .65rem; border-radius: 9px; font-size: .85rem; }
+.admin-layout .btn { padding: .45rem .8rem; border-radius: 9px; font-size: .82rem; }
+.admin-layout .icon-btn { width: 28px; height: 28px; border-radius: 8px; font-size: .8rem; }
+.admin-layout .form, .admin-layout .grid-2 { gap: 8px; }
+.admin-layout .field { gap: 3px; }
+.admin-layout .field > span { font-size: .75rem; }
+.admin-layout .filters, .admin-layout .export, .admin-layout .bulk-bar { gap: 6px; }
+.admin-layout .bulk-bar { padding: 6px 10px; border-radius: 10px; }
+.admin-layout .pill { font-size: .72rem; padding: .1rem .5rem; }
+.admin-layout .tag { font-size: .68rem; padding: .1rem .45rem; }
+.admin-layout code { font-size: .8rem; }
+.admin-layout .col-courses { font-size: .72rem; width: 230px; }
+.admin-layout #bulk-form { display: contents; }  /* formulaire sans contenu visible : pas d'espace vide */
+.admin-layout .check { font-size: .8rem; }
+.admin-layout .check input, .admin-layout .col-check input { width: 15px; height: 15px; }
+.admin-layout .empty { padding: 18px; }
+.admin-layout .modal-body { padding: 14px 16px; }
+.admin-layout .toast { font-size: .82rem; padding: .6rem .8rem; }
+/* Sidebar plus compacte */
+.admin-layout { grid-template-columns: 210px minmax(0, 1fr); }
+.admin-layout .sidebar { padding: 14px 10px; gap: 16px; }
+.admin-layout .sidebar .brand { font-size: .92rem; }
+.admin-layout .side-link { padding: .5rem .65rem; font-size: .84rem; gap: .55rem; border-radius: 9px; }
+.admin-layout .side-link svg { width: 17px; height: 17px; }
+.admin-layout .side-user { font-size: .72rem; padding: 0 .65rem; }
+@media (max-width: 900px) { .admin-layout { grid-template-columns: minmax(0, 1fr); } .admin-layout .sidebar { width: 230px; } }
