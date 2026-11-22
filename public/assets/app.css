@@ -6,7 +6,7 @@
   --ink: #111111;
   --muted: #6b6b68;
   --accent: #f98012;
-  --accent-ink: #111111;
+  --accent-ink: #ffffff;  /* texte sur fond orange */
   --radius: 18px;
   --ease: cubic-bezier(.22, 1, .36, 1);
   --shadow: 0 1px 2px rgba(17,17,17,.04), 0 12px 32px rgba(17,17,17,.06);
@@ -530,3 +530,16 @@ td .pill { white-space: nowrap; }
 .admin-layout .side-link svg { width: 17px; height: 17px; }
 .admin-layout .side-user { font-size: .72rem; padding: 0 .65rem; }
 @media (max-width: 900px) { .admin-layout { grid-template-columns: minmax(0, 1fr); } .admin-layout .sidebar { width: 230px; } }
+
+/* =========================================================
+   Texte blanc sur fond orange (boutons principaux, sidebar, barre mobile)
+   ========================================================= */
+.btn-primary, .btn-primary:hover { color: var(--accent-ink); }
+.btn-primary.is-loading::after { border-color: var(--accent-ink); border-right-color: transparent; }
+.sidebar, .mobile-bar { color: var(--accent-ink); }
+.sidebar .brand, .mobile-bar .brand, .mobile-bar .icon-btn { color: var(--accent-ink); }
+.side-link { color: var(--accent-ink); }
+.side-link:hover, .side-link:focus-visible { background: rgba(255, 255, 255, .2); }
+.side-link[aria-current="page"] { color: var(--ink); }          /* entrée active : fond blanc, texte noir */
+.side-foot { border-top-color: rgba(255, 255, 255, .35); }
+.side-user { opacity: .9; }
