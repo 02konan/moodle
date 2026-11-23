@@ -15,5 +15,6 @@ declare(strict_types=1);
   <script src="<?= e(asset('admin-edit.js')) ?>"></script>
   <script src="<?= e(asset('cohort-subjects.js')) ?>"></script>
   <script src="<?= e(asset('cohort-pdf.js')) ?>"></script>
+  <script src="<?= e(asset('moodle-sync.js')) ?>"></script>
 </body>
 </html>

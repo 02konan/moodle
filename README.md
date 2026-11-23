@@ -25,10 +25,14 @@ Créer un autre administrateur (Dokploy → service → Terminal, conteneur `app
 php bin/create-admin.php admin@exemple.com "MotDePasseSolide"
 ```
 
-## Service web Moodle (page Doublons)
+## Service web Moodle (Cohortes et Doublons)
 
-La page **Doublons** peut vérifier dans Moodle quels comptes en double ont déjà servi, garder ceux-là
-et supprimer les accès jamais utilisés (dans Moodle et dans la base). À configurer une fois dans Moodle :
+Avec le service web Moodle, l'application peut :
+- **Cohortes → « Créer dans Moodle »** : créer en un clic les comptes, la cohorte, les inscriptions aux cours
+  de la filière et le groupe `GP/<cohorte>` (rejouable : ce qui existe déjà est réutilisé) ;
+- **Doublons** : vérifier quels comptes en double ont déjà servi et supprimer les accès jamais utilisés.
+
+À configurer une fois dans Moodle :
 
 Les deux fonctions ne s'activent pas une à une : elles s'ajoutent à un **service externe personnalisé**
 (le service « Moodle mobile » fourni par défaut ne les contient pas). Adresses directes, valables quelle que soit
@@ -38,11 +42,24 @@ la version de Moodle (remplacer `https://votre-moodle`) :
 2. `https://votre-moodle/admin/settings.php?section=webserviceprotocols` : activer **REST protocol** (icône œil).
 3. `https://votre-moodle/admin/settings.php?section=externalservices` : *Services personnalisés* → **Ajouter**
    (nom « Inscriptions », cocher *Activé* et *Utilisateurs autorisés seulement*) → **Ajouter un service** →
-   **Ajouter des fonctions** : `core_user_get_users_by_field` et `core_user_delete_users`.
+   **Ajouter des fonctions** : les 11 fonctions ci-dessous.
 4. Sur la même page, ligne du service → **Utilisateurs autorisés** : ajouter un compte administrateur.
 5. `https://votre-moodle/admin/webservice/tokens.php` → **Créer un jeton** pour ce compte et ce service.
 
 Récapitulatif guidé dans Moodle : `https://votre-moodle/admin/settings.php?section=webservicesoverview`.
+
+Fonctions à ajouter au service :
+
+| Fonction | Utilisée pour |
+|---|---|
+| `core_user_get_users_by_field` | retrouver les comptes et leurs dates de connexion |
+| `core_user_create_users` | créer les comptes |
+| `core_user_delete_users` | supprimer les doublons jamais utilisés |
+| `core_cohort_search_cohorts`, `core_cohort_create_cohorts`, `core_cohort_add_cohort_members` | cohortes |
+| `core_course_get_courses_by_field`, `enrol_manual_enrol_users` | inscription aux cours (l'inscription manuelle doit être activée dans chaque cours) |
+| `core_group_get_course_groups`, `core_group_create_groups`, `core_group_add_group_members` | groupes `GP/<cohorte>` |
+
+Les étudiants sont inscrits avec le rôle « Étudiant » (identifiant 5 par défaut ; sinon définir `MOODLE_STUDENT_ROLE_ID`).
 
 6. Dans Dokploy (onglet *Environment*) : `MOODLE_URL=https://votre-moodle.exemple` et `MOODLE_TOKEN=<le jeton>`, puis *Deploy*.
 

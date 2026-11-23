@@ -70,3 +70,9 @@ function subjects_by_cohort(PDO $pdo): array
     foreach ($rows as $r) $out[$r['cohort']][] = $r['label'];
     return $out;
 }
+
+/** Nom de famille envoyé à Moodle (CSV et service web) : « KONAN (BTS-2-FC-03-ANGRE) ». */
+function moodle_lastname(array $student): string
+{
+    return $student['lastname'] . ' (' . $student['cohort'] . ')';
+}
