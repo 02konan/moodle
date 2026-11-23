@@ -76,3 +76,36 @@ function moodle_lastname(array $student): string
 {
     return $student['lastname'] . ' (' . $student['cohort'] . ')';
 }
+
+/**
+ * Cohortes de la même filière que $cohort (« BTS-2-ELT-01-ANGRE » → toutes les « BTS 2 ELT », toutes sections).
+ * Retourne ['prefix' => 'BTS 2 ELT', 'others' => ['BTS-2-ELT-02-ANGRE', 'BTS-2-ELT-01-YOP', …]].
+ */
+function filiere_cohorts(PDO $pdo, string $cohort): array
+{
+    $rows = $pdo->query("SELECT cohort, MIN(section_code) section_code FROM students WHERE cohort <> '' GROUP BY cohort")->fetchAll();
+    $codes = array_column($rows, 'section_code', 'cohort');
+    $prefix = moodle_course_prefix($cohort, (string)($codes[$cohort] ?? ''));
+    $others = [];
+    foreach ($codes as $c => $code) {
+        if ($c !== $cohort && $prefix !== '' && moodle_course_prefix((string)$c, (string)$code) === $prefix) $others[] = (string)$c;
+    }
+    natcasesort($others);
+    return ['prefix' => $prefix, 'others' => array_values($others)];
+}
+
+/**
+ * Copie des matières dans d'autres cohortes, sans toucher aux matières qu'elles ont déjà
+ * (enseignant et heures repris de la ligne d'origine). Retourne le nombre de lignes ajoutées.
+ * $rows : [['subject_id' => …, 'teacher_id' => …, 'hours' => …], …]
+ */
+function copy_subjects_to_cohorts(PDO $pdo, array $rows, array $cohorts): int
+{
+    $ins = $pdo->prepare('INSERT IGNORE INTO cohort_subjects (cohort, subject_id, teacher_id, hours) VALUES (?, ?, ?, ?)');
+    $n = 0;
+    foreach ($cohorts as $c) foreach ($rows as $r) {
+        $ins->execute([$c, (int)$r['subject_id'], (int)$r['teacher_id'], $r['hours'] !== null ? (int)$r['hours'] : null]);
+        $n += $ins->rowCount();
+    }
+    return $n;
+}

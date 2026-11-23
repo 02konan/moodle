@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
+require __DIR__ . '/../../src/moodle_courses.php';
 
 require_admin();
 
@@ -76,6 +77,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([(int)($_POST['id'] ?? 0), $cohort]);
             $flash[] = ['message' => 'Matière retirée de la cohorte.', 'type' => 'success'];
 
+        } elseif ($action === 'sync_filiere') {
+            if ($cohort === '') throw new RuntimeException('Cohorte manquante.');
+            $fil = filiere_cohorts($pdo, $cohort);
+            if (!$fil['others']) throw new RuntimeException("Aucune autre cohorte dans la filière {$fil['prefix']}.");
+            $stmt = $pdo->prepare('SELECT subject_id, teacher_id, hours FROM cohort_subjects WHERE cohort = ?');
+            $stmt->execute([$cohort]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!$rows) throw new RuntimeException('Cette cohorte n\'a aucune matière à copier.');
+            $n = copy_subjects_to_cohorts($pdo, $rows, $fil['others']);
+            $flash[] = ['message' => $n
+                ? "$n matière(s) ajoutée(s) dans " . count($fil['others']) . " cohorte(s) de la filière {$fil['prefix']}."
+                : "Toutes les cohortes de la filière {$fil['prefix']} ont déjà ces matières.", 'type' => 'success'];
+
         } elseif ($action === 'add' || $action === 'update') {
             if ($cohort === '') throw new RuntimeException('Cohorte manquante.');
 
@@ -95,6 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $pdo->prepare("INSERT INTO cohort_subjects (cohort, subject_id, teacher_id, hours) VALUES (?, ?, ?, ?)")
                     ->execute([$cohort, $subject['id'], $teacher['id'], $hours]);
+
+                // Même matière pour toutes les cohortes de la filière (celles qui l'ont déjà sont laissées telles quelles)
+                if (!empty($_POST['propagate'])) {
+                    $fil = filiere_cohorts($pdo, $cohort);
+                    $n = copy_subjects_to_cohorts($pdo, [['subject_id' => $subject['id'], 'teacher_id' => $teacher['id'], 'hours' => $hours]], $fil['others']);
+                    if ($fil['others']) {
+                        $flash[] = ['message' => "« {$subject['label']} » ajoutée aussi à $n autre(s) cohorte(s) de la filière {$fil['prefix']}"
+                            . ($n < count($fil['others']) ? ' (les autres l\'avaient déjà).' : '.'), 'type' => 'success'];
+                    }
+                }
             } else {
                 $id = (int)($_POST['id'] ?? 0);
                 $stmt = $pdo->prepare("SELECT id FROM cohort_subjects WHERE cohort = ? AND subject_id = ? AND id <> ?");
@@ -175,6 +199,8 @@ if ($selectedCohort !== '') {
     $stmt->execute([$selectedCohort]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+$filiere = $selectedCohort !== '' ? filiere_cohorts($pdo, $selectedCohort) : ['prefix' => '', 'others' => []];
 
 $suggestedSubjects = $pdo->query("SELECT label FROM subjects ORDER BY label")->fetchAll(PDO::FETCH_COLUMN);
 $allTeachers       = $pdo->query("SELECT fullname, phone FROM teachers ORDER BY fullname")->fetchAll(PDO::FETCH_ASSOC);
@@ -274,6 +300,13 @@ require __DIR__ . '/../../includes/header.php';
           </label>
         </div>
 
+        <?php if (!$editRow && $filiere['others']): ?>
+          <label class="check">
+            <input type="checkbox" name="propagate" value="1" checked>
+            Ajouter aussi aux <?= count($filiere['others']) ?> autre(s) cohorte(s) de la filière <strong><?= e($filiere['prefix']) ?></strong>
+          </label>
+        <?php endif; ?>
+
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn btn-primary" type="submit">
             <?= $editRow ? 'Enregistrer les modifications' : 'Ajouter la matière' ?>
@@ -287,7 +320,25 @@ require __DIR__ . '/../../includes/header.php';
 
     <!-- Liste des matières de la cohorte -->
     <section class="panel reveal">
-      <h2>Matières enseignées — <?= e($selectedCohort) ?></h2>
+      <div class="dup-head">
+        <h2>Matières enseignées — <?= e($selectedCohort) ?></h2>
+        <?php if ($filiere['others'] && $rows): ?>
+          <span class="bulk-spacer"></span>
+          <form method="post" action="./cohort-subjects.php">
+            <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+            <input type="hidden" name="action" value="sync_filiere">
+            <input type="hidden" name="cohort" value="<?= e($selectedCohort) ?>">
+            <button class="btn" type="submit"
+                    onclick="return confirm('Ajouter les <?= count($rows) ?> matière(s) de <?= e($selectedCohort) ?> aux <?= count($filiere['others']) ?> autre(s) cohorte(s) de la filière <?= e($filiere['prefix']) ?> ? Les matières déjà présentes ne sont pas modifiées.');">
+              Copier dans toute la filière <?= e($filiere['prefix']) ?></button>
+          </form>
+        <?php endif; ?>
+      </div>
+      <?php if ($filiere['others']): ?>
+        <p class="muted small">Même filière (<?= e($filiere['prefix']) ?>) :
+          <?php foreach ($filiere['others'] as $o): ?><a class="pill-link" href="./cohort-subjects.php?cohort=<?= e(urlencode($o)) ?>"><span class="pill"><?= e($o) ?></span></a> <?php endforeach; ?>
+        </p>
+      <?php endif; ?>
       <div class="table-wrap">
         <table>
           <thead>
