@@ -548,3 +548,10 @@ td .pill { white-space: nowrap; }
 .dup-group form { display: grid; gap: 8px; }
 .dup-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tag-warn { background: var(--accent); color: var(--accent-ink); }
+
+/* Doublons : plan de nettoyage Moodle */
+.tag-keep { background: #1f7a3f; color: #fff; }
+.tag-del { background: #b00020; color: #fff; }
+tbody tr.plan-delete td { background: #fff5f5; }
+tbody tr.plan-delete td:not(:last-child):not(:nth-last-child(2)) { opacity: .75; }
+.dup-note { color: #8a4b00; font-weight: 500; }
