@@ -46,7 +46,7 @@ foreach ($rows as $r) {
     $line = [
         $r['username'],
         $r['firstname'],
-        $r['lastname'].' ('.$r['cohort'].')',
+        moodle_lastname($r),
         $r['email'],
         $r['password'],
         $r['city'],

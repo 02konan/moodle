@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/../../src/bootstrap.php';
+require __DIR__ . '/../../src/MoodleApi.php';
 require_admin();
+$moodleReady = MoodleApi::fromEnv() !== null;   // boutons « Créer dans Moodle » si le service web est configuré
 
 $pdo = db();
 $q = trim((string)($_GET['q'] ?? ''));
@@ -53,7 +55,10 @@ require __DIR__ . '/../../includes/header.php';
       <span><strong id="cohort-bulk-count">0</strong> cohorte(s) sélectionnée(s)</span>
       <button class="btn" type="button" id="cohort-bulk-clear">Désélectionner</button>
       <span class="bulk-spacer"></span>
-      <button class="btn btn-primary" type="button" id="cohort-bulk-export"><span class="btn-label">Exporter les listes PDF</span></button>
+      <button class="btn" type="button" id="cohort-bulk-export"><span class="btn-label">Exporter les listes PDF</span></button>
+      <?php if ($moodleReady): ?>
+        <button class="btn btn-primary" type="button" id="cohort-bulk-sync">Créer dans Moodle</button>
+      <?php endif; ?>
     </div>
 
     <div class="table-wrap">
@@ -73,6 +78,9 @@ require __DIR__ . '/../../includes/header.php';
             <td class="row-actions">
               <a class="btn" href="<?= e($detail) ?>">Détails</a>
               <button class="btn" type="button" data-pdf-cohort="<?= e($c['cohort']) ?>"><span class="btn-label">PDF</span></button>
+              <?php if ($moodleReady): ?>
+                <button class="btn btn-primary" type="button" data-moodle-sync="<?= e($c['cohort']) ?>" title="Comptes, cohorte, inscriptions et groupes">Créer dans Moodle</button>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -83,4 +91,19 @@ require __DIR__ . '/../../includes/header.php';
       </table>
     </div>
   </section>
+  <?php if ($moodleReady): ?>
+    <dialog class="modal" id="sync-dialog" aria-labelledby="sync-title">
+      <div class="modal-body form">
+        <header>
+          <h2 id="sync-title">Création dans Moodle</h2>
+          <p class="muted small" id="sync-status"></p>
+        </header>
+        <div id="sync-log" class="sync-log"></div>
+        <div class="export"><button class="btn btn-primary" type="button" id="sync-close">Fermer</button></div>
+      </div>
+    </dialog>
+  <?php else: ?>
+    <p class="muted small">Pour créer les comptes, cohortes et groupes directement dans Moodle depuis cette page,
+      configurez le service web Moodle (<code>MOODLE_URL</code>, <code>MOODLE_TOKEN</code>, voir le README).</p>
+  <?php endif; ?>
 <?php require __DIR__ . '/../../includes/footer.php'; ?>
