@@ -8,7 +8,8 @@ require_admin();
 $pdo  = db();
 $id   = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $back = (string)($_GET['back'] ?? $_POST['back'] ?? '');
-$backUrl = './' . ($back !== '' ? '?' . $back : '');
+// Retour : filtres de la liste (« q=…&page=2 ») ou autre page admin (« duplicates.php?q=… »)
+$backUrl = preg_match('/^[a-z-]+\.php(\?.*)?$/', $back) ? './' . $back : './' . ($back !== '' ? '?' . $back : '');
 
 $st = $pdo->prepare('SELECT * FROM students WHERE id = ?');
 $st->execute([$id]);

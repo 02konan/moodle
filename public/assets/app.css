@@ -543,3 +543,8 @@ td .pill { white-space: nowrap; }
 .side-link[aria-current="page"] { color: var(--ink); }          /* entrée active : fond blanc, texte noir */
 .side-foot { border-top-color: rgba(255, 255, 255, .35); }
 .side-user { opacity: .9; }
+
+/* ===== Doublons ===== */
+.dup-group form { display: grid; gap: 8px; }
+.dup-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag-warn { background: var(--accent); color: var(--accent-ink); }
