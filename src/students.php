@@ -59,3 +59,14 @@ function duplicate_error(PDOException $ex): ?array
     }
     return ["Ce nom d'utilisateur est déjà pris.", ['username' => 'Déjà pris, essayez-en un autre.']];
 }
+
+/**
+ * Clé de comparaison des noms pour repérer les doublons : majuscules, accents, ponctuation
+ * et ordre des mots ignorés (« KONAN Ama », « Konan  Ama », « Ama KONAN » → « ama konan »).
+ */
+function name_key(string $lastname, string $firstname): string
+{
+    $words = preg_split('/[^a-z0-9]+/', ascii($lastname . ' ' . $firstname), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    sort($words);
+    return implode(' ', $words);
+}
