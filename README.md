@@ -25,6 +25,21 @@ Créer un autre administrateur (Dokploy → service → Terminal, conteneur `app
 php bin/create-admin.php admin@exemple.com "MotDePasseSolide"
 ```
 
+## Service web Moodle (page Doublons)
+
+La page **Doublons** peut vérifier dans Moodle quels comptes en double ont déjà servi, garder ceux-là
+et supprimer les accès jamais utilisés (dans Moodle et dans la base). À configurer une fois dans Moodle :
+
+1. **Administration du site → Développement → Fonctionnalités avancées** : activer les *services web*.
+2. **Administration du site → Serveur → Services web → Gérer les protocoles** : activer *REST*.
+3. **… → Services web → Services externes** : *Ajouter* un service (ex. « Inscriptions »), coché *Activé* et
+   *Utilisateurs autorisés seulement*, puis *Fonctions* → ajouter `core_user_get_users_by_field` et `core_user_delete_users`.
+4. Dans ce service, **Utilisateurs autorisés** : ajouter un compte administrateur.
+5. **… → Services web → Gérer les jetons** : *Créer un jeton* pour ce compte et ce service.
+6. Dans Dokploy (onglet *Environment*) : `MOODLE_URL=https://votre-moodle.exemple` et `MOODLE_TOKEN=<le jeton>`, puis *Deploy*.
+
+Le jeton donne le droit de supprimer des comptes : ne le partagez pas et ne le mettez pas dans le dépôt.
+
 ## Lancer en local
 
 ```bash
