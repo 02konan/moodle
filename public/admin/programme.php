@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $tree = plan_tree($pdo, $id);
+$nQuiz = 0;
 
 /* ---------- Composants ---------- */
 $hidden = fn(array $f) => implode('', array_map(fn($k, $v) => '<input type="hidden" name="' . e($k) . '" value="' . e((string)$v) . '">', array_keys($f), $f));
@@ -106,19 +107,19 @@ require __DIR__ . '/../../includes/header.php';
     <h2>Structure du cours</h2>
     <?php if (!$tree): ?><p class="muted small">Commencez par ajouter une section.</p><?php endif; ?>
 
-    <?php foreach ($tree as $si => $section): ?>
+    <?php foreach ($tree as $si => $section): $sNo = $si + 1; $subNo = 0; ?>
       <div class="plan-section">
-        <?= $row($section, 'Section', $si === 0, $si === count($tree) - 1) ?>
+        <?= $row($section, "Section $sNo", $si === 0, $si === count($tree) - 1) ?>
         <div class="plan-children">
           <?php foreach ($section['children'] as $ci => $child): $firstC = $ci === 0; $lastC = $ci === count($section['children']) - 1; ?>
-            <?php if ($child['type'] === 'quiz'): ?>
-              <?= $row($child, 'QCM', $firstC, $lastC) ?>
-            <?php else: ?>
+            <?php if ($child['type'] === 'quiz'): $nQuiz++; ?>
+              <?= $row($child, "QCM $nQuiz", $firstC, $lastC) ?>
+            <?php else: $subNo++; ?>
               <div class="plan-sub">
-                <?= $row($child, 'Sous-section', $firstC, $lastC) ?>
+                <?= $row($child, "$sNo.$subNo", $firstC, $lastC) ?>
                 <div class="plan-children">
-                  <?php foreach ($child['children'] as $qi => $quiz): ?>
-                    <?= $row($quiz, 'QCM', $qi === 0, $qi === count($child['children']) - 1) ?>
+                  <?php foreach ($child['children'] as $qi => $quiz): $nQuiz++; ?>
+                    <?= $row($quiz, "QCM $nQuiz", $qi === 0, $qi === count($child['children']) - 1) ?>
                   <?php endforeach; ?>
                   <?= $addForm((int)$child['id'], false) ?>
                 </div>
