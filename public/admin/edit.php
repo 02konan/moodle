@@ -9,7 +9,7 @@ $pdo  = db();
 $id   = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $back = (string)($_GET['back'] ?? $_POST['back'] ?? '');
 // Retour : filtres de la liste (« q=…&page=2 ») ou autre page admin (« duplicates.php?q=… »)
-$backUrl = preg_match('/^[a-z-]+\.php(\?.*)?$/', $back) ? './' . $back : './' . ($back !== '' ? '?' . $back : '');
+$backUrl = preg_match('/^[a-z-]+\.php(\?.*)?$/', $back) ? './' . $back : './inscriptions.php' . ($back !== '' ? '?' . $back : '');
 
 $st = $pdo->prepare('SELECT * FROM students WHERE id = ?');
 $st->execute([$id]);
@@ -86,7 +86,7 @@ $levels = [
     'class_id'   => ['Classe',  'class_label'],
 ];
 $pageTitle = 'Modifier un étudiant';
-$active = 'students';
+$active = 'inscriptions';
 require __DIR__ . '/../../includes/header.php';
 ?>
 

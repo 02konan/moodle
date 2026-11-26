@@ -67,12 +67,14 @@
     if (one) {
       e.preventDefault();
       const c = one.dataset.moodleSync;
-      if (confirm(`Créer dans Moodle les comptes, la cohorte, les inscriptions et les groupes de ${c} ?`)) run([c]);
+      window.confirmDialog({ title: 'Créer dans Moodle', text: `Créer les comptes, la cohorte, les inscriptions et les groupes de ${c} dans Moodle ?`, ok: 'Créer dans Moodle' })
+        .then((ok) => { if (ok) run([c]); });
       return;
     }
     if (e.target.closest('#cohort-bulk-sync')) {
       const list = [...document.querySelectorAll('input.cohort-check:checked')].map((c) => c.value);
-      if (list.length && confirm(`Créer dans Moodle les comptes, cohortes, inscriptions et groupes de ${list.length} cohorte(s) ?`)) run(list);
+      if (list.length) window.confirmDialog({ title: 'Créer dans Moodle', text: `Créer les comptes, cohortes, inscriptions et groupes de ${list.length} cohorte(s) dans Moodle ?`, ok: 'Créer dans Moodle' })
+        .then((ok) => { if (ok) run(list); });
       return;
     }
     if (e.target.closest('#sync-close')) {

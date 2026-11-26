@@ -9,7 +9,7 @@ require_admin();
 const BULK_MAX = 500;
 
 $back    = (string)($_POST['back'] ?? '');
-$backUrl = './' . ($back !== '' ? '?' . $back : '');
+$backUrl = './inscriptions.php' . ($back !== '' ? '?' . $back : '');
 $done = function (string $msg, string $type) use ($backUrl): never {
     flash($msg, $type);
     redirect($backUrl);

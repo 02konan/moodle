@@ -19,6 +19,7 @@
     function refresh() {
       const all = rows(), sel = picked();
       counts.forEach((c) => { c.textContent = sel.length; });
+      $('bulk-delete').dataset.confirm = `Supprimer définitivement ${sel.length} étudiant(s) ? Cette action est irréversible.`;
       bar.hidden = sel.length === 0;
       all.forEach((c) => c.closest('tr').classList.toggle('is-selected', c.checked));
       if (checkAll) {
@@ -32,11 +33,8 @@
     refresh();
 
     /* ---------- Suppression ---------- */
-    $('bulk-delete').addEventListener('click', (e) => {
-      const n = picked().length;
-      if (!n) { e.preventDefault(); return; }
-      if (!confirm(`Supprimer définitivement ${n} étudiant(s) ? Cette action est irréversible.`)) e.preventDefault();
-    });
+    $('bulk-delete').setAttribute('data-confirm-danger', '');
+    $('bulk-delete').addEventListener('click', (e) => { if (!picked().length) e.preventDefault(); });
 
     /* ---------- Modale : listes en cascade (toutes optionnelles) ---------- */
     const chain = [
@@ -83,7 +81,7 @@
 
     /* ---------- Validation avant envoi (action=edit) ---------- */
     form.addEventListener('submit', (e) => {
-      if (e.submitter?.value !== 'edit') return;
+      if (e.submitter?.value !== 'edit' || form.dataset.confirmed === '1') return;
       const filled = chain.filter((c) => sel(c.name).value);
       if (filled.length && filled.length < chain.length) {
         e.preventDefault();
@@ -93,8 +91,15 @@
       }
       const nothing = !filled.length && sel('export_status').value === 'keep' && !sel('regen_password').checked;
       if (nothing) { e.preventDefault(); notify('Renseignez au moins un champ à modifier.'); return; }
-      if (!confirm(`Appliquer ces modifications à ${picked().length} étudiant(s) ?`)) { e.preventDefault(); return; }
+      e.preventDefault();
+      const submitter = e.submitter;
       dlg.close();
+      window.confirmDialog({ title: 'Modification de masse', text: `Appliquer ces modifications à ${picked().length} étudiant(s) ?`, ok: 'Appliquer' })
+        .then((ok) => {
+          if (!ok) { dlg.showModal(); return; }
+          form.dataset.confirmed = '1';
+          try { form.requestSubmit(submitter); } finally { delete form.dataset.confirmed; }
+        });
     });
   }
 

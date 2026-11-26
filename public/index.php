@@ -63,7 +63,7 @@ require __DIR__ . '/../src/bootstrap.php';
   </div>
 
     <div id="toasts" class="toasts" aria-live="polite"></div>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="<?= e(asset('vendor/sweetalert2.all.min.js', './assets/')) ?>"></script>
   <script src="<?= e(asset('app.js', './assets/')) ?>"></script>
 
 </body>
