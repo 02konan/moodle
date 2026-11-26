@@ -100,10 +100,37 @@
   }, true);
 
   // Sidebar : réduire / déplier (colonne d'icônes), choix mémorisé dans le navigateur
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('[data-side-collapse]')) return;
-    const collapsed = document.documentElement.classList.toggle('side-collapsed');
+  // Réduite : le bouton disparaît et c'est le logo qui déplie la sidebar.
+  const setCollapsed = (collapsed) => {
+    document.documentElement.classList.toggle('side-collapsed', collapsed);
     try { localStorage.setItem('bo-side', collapsed ? 'collapsed' : 'expanded'); } catch { /* stockage indisponible */ }
+  };
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-side-collapse]')) { setCollapsed(true); return; }
+    const brand = e.target.closest('.bo-side .bo-brand');
+    if (brand && document.documentElement.classList.contains('side-collapsed') && window.matchMedia('(min-width: 1025px)').matches) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setCollapsed(false);
+    }
+  }, true);
+
+  // Lignes dépliables : <tr data-expand="id-de-la-ligne-détail"> + bouton [data-row-toggle]
+  function toggleRow(row, open) {
+    const detail = document.getElementById(row.dataset.expand);
+    if (!detail) return;
+    open ??= detail.hidden;
+    detail.hidden = !open;
+    row.classList.toggle('is-expanded', open);
+    row.querySelector('[data-row-toggle]')?.setAttribute('aria-expanded', String(open));
+  }
+  document.addEventListener('click', (e) => {
+    const row = e.target.closest('tr[data-expand]');
+    if (!row) return;
+    if (e.target.closest('[data-row-toggle]')) { toggleRow(row); return; }
+    if (e.target.closest('a, button, input, label, select, textarea, form')) return;
+    if (window.getSelection()?.toString()) return;   // sélection de texte : ne pas replier
+    toggleRow(row);
   });
 
   window.toast = toast;

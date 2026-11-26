@@ -65,7 +65,7 @@ require __DIR__ . '/../../includes/header.php';
             <td class="small"><?= e($s['email']) ?></td>
             <td><?= $s['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
             <td class="row-actions">
-              <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$s['id'], 'back' => $back])) ?>" title="Modifier" aria-label="Modifier">✎</a>
+              <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$s['id'], 'back' => $back])) ?>" title="Modifier" aria-label="Modifier"><?= ui_icon('pencil') ?></a>
             </td>
           </tr>
         <?php endforeach; ?>

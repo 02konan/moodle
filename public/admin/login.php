@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="auth-body">
   <main class="auth-card reveal">
-    <div class="brand"><img src="../assets/logo.png" alt="" width="40" height="40"> Backoffice · Inscriptions Moodle</div>
+    <div class="brand"><span class="bo-logo"><?= ui_icon('layers') ?></span> Backoffice · Inscriptions Moodle</div>
     <div>
       <h1>Connexion</h1>
       <p class="muted">Accès réservé à l'administration.</p>

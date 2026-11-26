@@ -69,15 +69,15 @@ $row = function (array $it, string $label, bool $first, bool $last) use ($hidden
         . '<span class="plan-label">' . e($label) . '</span>'
         . '<form method="post" action="./programme.php" class="plan-rename" data-key="rename-' . $id . '">' . $hidden($base + ['action' => 'rename', 'item_id' => $id])
         . '<input type="text" name="title" value="' . e($it['title']) . '" maxlength="255" required aria-label="Titre : ' . e($what) . '">'
-        . '<button class="icon-btn" type="submit" title="Enregistrer le titre" aria-label="Enregistrer le titre">✓</button></form>'
+        . '<button class="icon-btn" type="submit" title="Enregistrer le titre" aria-label="Enregistrer le titre">' . ui_icon('check') . '</button></form>'
         . '<span class="plan-tools">'
         . ($it['type'] === 'quiz'
             ? '<a class="btn plan-agenda' . (!empty($agendaCounts[$id]) ? ' has-dates' : '') . '" href="./quiz-agenda.php?plan=' . (int)$base['id'] . '&amp;item=' . $id . '" title="Programmer ce QCM par cohorte">Agenda'
               . (!empty($agendaCounts[$id]) ? ' <span class="plan-agenda-n">' . $agendaCounts[$id] . '</span>' : '') . '</a>'
             : '')
-        . $btn('move', '↑', 'Monter', ['dir' => -1], $first)
-        . $btn('move', '↓', 'Descendre', ['dir' => 1], $last)
-        . $btn('delete', '✕', 'Supprimer', [], false, $deleteMsg)
+        . $btn('move', ui_icon('up'), 'Monter', ['dir' => -1], $first)
+        . $btn('move', ui_icon('down'), 'Descendre', ['dir' => 1], $last)
+        . $btn('delete', ui_icon('trash'), 'Supprimer', [], false, $deleteMsg)
         . '</span></div>';
 };
 

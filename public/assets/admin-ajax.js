@@ -156,10 +156,22 @@
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-check-all]');
     if (!btn) return;
-    const boxes = [...(btn.closest('form') || document).querySelectorAll(`input[type=checkbox][name="${CSS.escape(btn.dataset.checkAll)}"]`)];
+    const scope = (btn.dataset.checkScope && btn.closest(btn.dataset.checkScope)) || btn.closest('form') || document;
+    const boxes = [...scope.querySelectorAll(`input[type=checkbox][name="${CSS.escape(btn.dataset.checkAll)}"]`)];
     const all = boxes.every((b) => b.checked);
     boxes.forEach((b) => { b.checked = !all; });
+    updateCounts(btn.closest('form'));
   });
+
+  // Compteur « n sélectionné(s) » : <span data-count-for="nom[]">
+  function updateCounts(form) {
+    (form || document).querySelectorAll('[data-count-for]').forEach((el) => {
+      const n = (form || document).querySelectorAll(`input[type=checkbox][name="${CSS.escape(el.dataset.countFor)}"]:checked`).length;
+      el.textContent = `${n} sélectionné${n > 1 ? 's' : ''}`;
+      el.hidden = n === 0;
+    });
+  }
+  document.addEventListener('change', (e) => { if (e.target.matches('input[type=checkbox]')) updateCounts(e.target.form); });
 
   window.addEventListener('popstate', () => visit(location.href, { history: 'none' }));
 
