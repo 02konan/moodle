@@ -28,7 +28,8 @@
   }
 
   /* ---------- Requête + remplacement du contenu ---------- */
-  async function visit(url, { method = 'GET', body = null, history: hist = 'push', soft = false } = {}) {
+  // soft : recherche en direct (curseur conservé) ; stay : retour sur la même page après une action (défilement conservé)
+  async function visit(url, { method = 'GET', body = null, history: hist = 'push', soft = false, stay = false } = {}) {
     controller?.abort();
     controller = new AbortController();
     document.body.classList.add('is-loading');
@@ -43,7 +44,11 @@
         const data = await res.json();
         notify(data.flash);
         if (data.error) window.toast?.(data.error, 'error');
-        if (data.redirect) return visit(new URL(data.redirect, res.url || url).href, { history: 'push' });
+        if (data.redirect) {
+          const target = new URL(data.redirect, res.url || url);
+          const same = target.pathname === location.pathname && target.search === location.search;
+          return visit(target.href, same ? { history: 'replace', stay: true } : { history: 'push' });
+        }
         return;
       }
 
@@ -52,7 +57,7 @@
       const next = doc.getElementById('app');
       if (!next) { window.location.href = res.url || url; return; }   // page hors backoffice (connexion…)
 
-      swap(next, doc.title, soft);
+      swap(next, doc.title, { soft, stay });
       if (hist === 'push') window.history.pushState({ async: true }, '', res.url || url);
       else if (hist === 'replace') window.history.replaceState({ async: true }, '', res.url || url);
     } catch (err) {
@@ -63,14 +68,17 @@
     }
   }
 
-  function swap(next, title, soft) {
+  let lastFormKey = null;   // formulaire envoyé (data-key) : son champ reprend le curseur après « stay »
+
+  function swap(next, title, { soft = false, stay = false } = {}) {
+    const scrollY = window.scrollY;
     // Conserve le champ en cours de saisie (recherche en direct)
     const focused = document.activeElement;
     const keep = soft && focused?.name && app().contains(focused)
       ? { name: focused.name, start: focused.selectionStart, end: focused.selectionEnd } : null;
 
     const node = document.importNode(next, true);
-    if (soft) node.classList.add('no-anim');
+    if (soft || stay) node.classList.add('no-anim');
     app().replaceWith(node);
     document.title = title;
     document.body.classList.remove('sidebar-open');
@@ -86,9 +94,14 @@
     if (keep) {
       const el = node.querySelector(`[name="${CSS.escape(keep.name)}"]`);
       if (el) { el.focus(); try { el.setSelectionRange(keep.start, keep.end); } catch { /* type sans sélection */ } }
+    } else if (stay) {
+      window.scrollTo({ top: scrollY });
+      const f = lastFormKey && node.querySelector(`form[data-key="${CSS.escape(lastFormKey)}"] input[type="text"]`);
+      if (f) f.focus({ preventScroll: true });
     } else {
       window.scrollTo({ top: 0 });
     }
+    lastFormKey = null;
     pageLoaded(node);
   }
 
@@ -119,6 +132,7 @@
       const live = form.hasAttribute('data-live-form');   // recherche en direct : pas d'entrée d'historique par frappe
       visit(url.href, { soft: live, history: live ? 'replace' : 'push' });
     } else {
+      lastFormKey = form.dataset.key || null;
       // POST : en cas de réponse HTML (erreurs de saisie), l'adresse affichée ne change pas
       visit(url.href, { method: 'POST', body: data, history: 'none' });
     }
