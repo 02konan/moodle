@@ -91,8 +91,8 @@ require __DIR__ . '/../../includes/header.php';
         <span class="bulk-count"><strong id="bulk-count">0</strong> sélectionné(s)</span>
         <button class="btn" type="button" id="bulk-clear">Désélectionner</button>
         <span class="bulk-spacer"></span>
-        <button class="btn" type="button" id="bulk-edit-open">✎ Modifier</button>
-        <button class="btn btn-danger" type="submit" name="action" value="delete" id="bulk-delete">✕ Supprimer</button>
+        <button class="btn" type="button" id="bulk-edit-open"><?= ui_icon('pencil') ?>Modifier</button>
+        <button class="btn btn-danger" type="submit" name="action" value="delete" id="bulk-delete"><?= ui_icon('trash') ?>Supprimer</button>
       </div>
 
       <dialog class="modal" id="bulk-dialog" aria-labelledby="bulk-title">
@@ -142,30 +142,53 @@ require __DIR__ . '/../../includes/header.php';
           <th>Identifiant</th><th>Nom</th><th>Mot de passe</th><th>Cohorte</th><th>Cours / groupe Moodle</th><th>Export</th><th></th>
         </tr></thead>
         <tbody>
-        <?php foreach ($rows as $r): ?>
-          <tr>
+        <?php foreach ($rows as $r):
+          $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects, $overrides);
+          $det = 'det-' . (int)$r['id']; ?>
+          <tr class="row-main" data-expand="<?= $det ?>" title="Cliquer pour afficher le détail">
             <td class="col-check"><input type="checkbox" class="row-check" name="ids[]" value="<?= (int)$r['id'] ?>" form="bulk-form" aria-label="Sélectionner <?= e($r['lastname']) ?>"></td>
             <td><code><?= e($r['username']) ?></code></td>
             <td><strong><?= e($r['lastname']) ?></strong> <?= e($r['firstname']) ?></td>
             <td class="muted"><?= e($r['password']) ?></td>
             <td><span class="pill"><?= e($r['cohort']) ?></span></td>
             <td class="small col-courses">
-              <?php $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects, $overrides); ?>
               <?php if ($courses): ?>
-                <?= implode('<br>', array_map('e', $courses)) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span>
+                <div class="clamp-2"><?= implode('<br>', array_map('e', $courses)) ?><br><span class="muted"><?= e(moodle_group_name($r['cohort'])) ?></span></div>
               <?php else: ?>
                 <a class="tag tag-new" href="./cohort-subjects.php?cohort=<?= e(urlencode($r['cohort'])) ?>">Aucune matière</a>
               <?php endif; ?>
             </td>
             <td><?= $r['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
             <td class="row-actions">
-              <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$r['id'], 'back' => $query()])) ?>" title="Modifier" aria-label="Modifier">✎</a>
+              <button class="icon-btn row-toggle" type="button" data-row-toggle aria-expanded="false" aria-controls="<?= $det ?>" title="Détails" aria-label="Afficher le détail"><?= ui_icon('down') ?></button>
+              <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$r['id'], 'back' => $query()])) ?>" title="Modifier" aria-label="Modifier"><?= ui_icon('pencil') ?></a>
               <form method="post" action="./delete.php">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="back" value="<?= e($query()) ?>">
-                <button class="icon-btn" title="Supprimer" aria-label="Supprimer" data-confirm="Supprimer l'inscription de <?= e($r['lastname'] . ' ' . $r['firstname']) ?> ?" data-confirm-danger>✕</button>
+                <button class="icon-btn" title="Supprimer" aria-label="Supprimer" data-confirm="Supprimer l'inscription de <?= e($r['lastname'] . ' ' . $r['firstname']) ?> ?" data-confirm-danger><?= ui_icon('trash') ?></button>
               </form>
+            </td>
+          </tr>
+          <tr class="row-details" id="<?= $det ?>" hidden>
+            <td colspan="8">
+              <div class="details-grid">
+                <div><span>Nom complet</span><strong><?= e($r['lastname'] . ' ' . $r['firstname']) ?></strong></div>
+                <div><span>Nom d'utilisateur</span><code><?= e($r['username']) ?></code></div>
+                <div><span>Mot de passe</span><code><?= e($r['password']) ?></code></div>
+                <div><span>E-mail</span><?= e($r['email']) ?></div>
+                <div><span>Parcours</span><?= e(implode(' › ', array_filter([$r['section_label'], $r['cycle_label'], $r['level_label'], $r['class_label']]))) ?></div>
+                <div><span>Inscrit le</span><?= e(date('d/m/Y à H:i', strtotime($r['created_at']))) ?></div>
+                <div><span>Export Moodle</span><?= $r['exported_at'] ? 'Exporté le ' . e(date('d/m/Y à H:i', strtotime($r['exported_at']))) : 'Pas encore exporté' ?></div>
+                <div><span>Groupe Moodle</span><code><?= e(moodle_group_name($r['cohort'])) ?></code></div>
+                <div class="details-wide"><span>Cours Moodle (<?= count($courses) ?>)</span>
+                  <?php if ($courses): ?>
+                    <div class="chip-list"><?php foreach ($courses as $c): ?><span class="chip"><?= e($c) ?></span><?php endforeach; ?></div>
+                  <?php else: ?>
+                    <a class="link small" href="./cohort-subjects.php?cohort=<?= e(urlencode($r['cohort'])) ?>">Aucune matière : ajouter les matières de la cohorte</a>
+                  <?php endif; ?>
+                </div>
+              </div>
             </td>
           </tr>
         <?php endforeach; ?>

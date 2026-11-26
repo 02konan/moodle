@@ -58,6 +58,21 @@ function asset(string $path, string $prefix = '../assets/'): string
     return $prefix . $path . (is_file($file) ? '?v=' . filemtime($file) : '');
 }
 
+/** Icône SVG du backoffice (trait, hérite de la couleur du texte) : trash, pencil, check, up, down, x, layers. */
+function ui_icon(string $name): string
+{
+    static $paths = [
+        'trash'  => '<path d="M3 6h18"/><path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"/><path d="M5.5 6l.9 13.6A2 2 0 0 0 8.4 21.5h7.2a2 2 0 0 0 2-1.9L18.5 6"/><path d="M10 11v6M14 11v6"/>',
+        'pencil' => '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+        'check'  => '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+        'up'     => '<path d="m6 15 6-6 6 6"/>',
+        'down'   => '<path d="m6 9 6 6 6-6"/>',
+        'x'      => '<path d="M18 6 6 18M6 6l12 12"/>',
+        'layers' => '<path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/>',
+    ];
+    return '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">' . ($paths[$name] ?? '') . '</svg>';
+}
+
 function e(?string $s): string
 {
     return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

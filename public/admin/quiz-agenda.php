@@ -112,9 +112,9 @@ require __DIR__ . '/../../includes/header.php';
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="plan" value="<?= $planId ?>"><input type="hidden" name="item" value="<?= $itemId ?>">
                 <input type="hidden" name="schedule" value="<?= (int)$s['id'] ?>">
-                <button class="icon-btn" type="submit" name="action" value="update" title="Enregistrer les dates" aria-label="Enregistrer les dates">✓</button>
+                <button class="icon-btn" type="submit" name="action" value="update" title="Enregistrer les dates" aria-label="Enregistrer les dates"><?= ui_icon('check') ?></button>
                 <button class="icon-btn" type="submit" name="action" value="delete" title="Supprimer" aria-label="Supprimer"
-                        data-confirm="Supprimer la programmation de <?= e($s['cohort']) ?> pour ce QCM ?" data-confirm-danger>✕</button>
+                        data-confirm="Supprimer la programmation de <?= e($s['cohort']) ?> pour ce QCM ?" data-confirm-danger><?= ui_icon('trash') ?></button>
               </form>
             </td>
           </tr>
@@ -137,10 +137,11 @@ require __DIR__ . '/../../includes/header.php';
       <?php if ($filiere): ?>
         <div class="field"><span>Cohortes de la filière <?= e(explode(':', $plan['title'], 2)[0]) ?>
           <button class="link small" type="button" data-check-all="cohorts[]">tout cocher</button></span>
-          <div class="cohort-picks">
+          <div class="chip-grid">
             <?php foreach ($filiere as $c): ?>
-              <label class="check"><input type="checkbox" name="cohorts[]" value="<?= e($c) ?>">
-                <?= e($c) ?><?= in_array($c, $scheduled, true) ? ' <span class="tag tag-done">déjà programmée</span>' : '' ?></label>
+              <label class="chip-check"><input type="checkbox" name="cohorts[]" value="<?= e($c) ?>">
+                <span class="chip-check-box"><?= ui_icon('check') ?></span>
+                <span class="chip-check-text"><?= e($c) ?><small><?= in_array($c, $scheduled, true) ? 'Déjà programmée pour ce QCM' : 'Pas encore programmée' ?></small></span></label>
             <?php endforeach; ?>
           </div>
         </div>
@@ -152,14 +153,39 @@ require __DIR__ . '/../../includes/header.php';
       </label>
 
       <?php if ($otherQuizzes): ?>
+        <?php
+          // QCM regroupés par section puis sous-section, dans l'ordre du cours
+          $alsoGroups = [];
+          foreach ($otherQuizzes as $q) $alsoGroups[$q['section']][$q['subsection'] ?? ''][] = $q;
+          $chip = fn(array $q) => '<label class="chip-check"><input type="checkbox" name="also[]" value="' . $q['id'] . '">'
+              . '<span class="chip-check-box">' . ui_icon('check') . '</span>'
+              . '<span class="chip-check-text">' . e($q['title'])
+              . (!empty($scheduleCounts[$q['id']]) ? '<small>' . $scheduleCounts[$q['id']] . ' cohorte(s) déjà programmée(s)</small>' : '<small>Non programmé</small>')
+              . '</span></label>';
+        ?>
         <details class="also-quizzes">
-          <summary>Appliquer aussi à d'autres QCM du cours <span class="muted small">(mêmes cohortes, même ouverture et fermeture)</span></summary>
-          <p class="small"><button class="link small" type="button" data-check-all="also[]">tout cocher</button></p>
-          <?php $group = null; foreach ($otherQuizzes as $q): $g = implode(' › ', array_filter([$q['section'], $q['subsection']])); ?>
-            <?php if ($g !== $group): $group = $g; ?><p class="also-group"><?= e($g) ?></p><?php endif; ?>
-            <label class="check"><input type="checkbox" name="also[]" value="<?= $q['id'] ?>">
-              <?= e($q['title']) ?><?= !empty($scheduleCounts[$q['id']]) ? ' <span class="tag tag-done">' . $scheduleCounts[$q['id']] . ' cohorte(s) programmée(s)</span>' : '' ?></label>
-          <?php endforeach; ?>
+          <summary>
+            <span>Appliquer aussi à d'autres QCM du cours</span>
+            <span class="muted small">mêmes cohortes, même ouverture et fermeture</span>
+            <span class="tag tag-warn also-count" data-count-for="also[]" hidden></span>
+          </summary>
+          <div class="also-toolbar">
+            <button class="btn btn-sm" type="button" data-check-all="also[]">Tout cocher / décocher</button>
+          </div>
+          <div class="also-groups">
+            <?php foreach ($alsoGroups as $section => $subs): ?>
+              <section class="also-section">
+                <header class="also-section-head">
+                  <h4><?= e($section) ?></h4>
+                  <button class="link small" type="button" data-check-all="also[]" data-check-scope=".also-section">tout cocher</button>
+                </header>
+                <?php foreach ($subs as $sub => $quizzes): ?>
+                  <?php if ($sub !== ''): ?><p class="also-sub-title"><?= e($sub) ?></p><?php endif; ?>
+                  <div class="chip-grid<?= $sub !== '' ? ' is-sub' : '' ?>"><?= implode('', array_map($chip, $quizzes)) ?></div>
+                <?php endforeach; ?>
+              </section>
+            <?php endforeach; ?>
+          </div>
         </details>
       <?php endif; ?>
 

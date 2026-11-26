@@ -366,13 +366,13 @@ require __DIR__ . '/../../includes/header.php';
                 </td>
                 <td><?= $r['hours'] !== null ? (int)$r['hours'] . ' h' : '<span class="muted">—</span>' ?></td>
                 <td style="text-align:right; white-space:nowrap;">
-                  <a class="btn" href="?cohort=<?= urlencode($selectedCohort) ?>&edit=<?= (int)$r['id'] ?>">Modifier</a>
+                  <a class="btn" href="?cohort=<?= urlencode($selectedCohort) ?>&edit=<?= (int)$r['id'] ?>"><?= ui_icon('pencil') ?>Modifier</a>
                   <form method="post" action="./cohort-subjects.php" style="display:inline;">
                     <input type="hidden" name="csrf"   value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="cohort" value="<?= e($selectedCohort) ?>">
                     <input type="hidden" name="id"     value="<?= (int)$r['id'] ?>">
-                    <button class="btn btn-danger" type="submit" data-confirm="Retirer « <?= e($r['subject']) ?> » de la cohorte <?= e($selectedCohort) ?> ?" data-confirm-danger data-confirm-ok="Retirer">Supprimer</button>
+                    <button class="btn btn-danger" type="submit" data-confirm="Retirer « <?= e($r['subject']) ?> » de la cohorte <?= e($selectedCohort) ?> ?" data-confirm-danger data-confirm-ok="Retirer"><?= ui_icon('trash') ?>Supprimer</button>
                   </form>
                 </td>
               </tr>

@@ -206,7 +206,7 @@ require __DIR__ . '/../../includes/header.php';
                 <td class="row-actions">
                   <button class="btn" type="submit" name="keep" value="<?= (int)$s['id'] ?>"
                           data-confirm="Garder <?= e($s['username']) ?> et supprimer les <?= count($g) - 1 ?> autre(s) inscription(s) de ce groupe ?" data-confirm-danger data-confirm-ok="Garder celui-ci">Garder celui-ci</button>
-                  <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$s['id'], 'back' => ltrim($self, './')])) ?>" title="Modifier" aria-label="Modifier">✎</a>
+                  <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$s['id'], 'back' => ltrim($self, './')])) ?>" title="Modifier" aria-label="Modifier"><?= ui_icon('pencil') ?></a>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -219,7 +219,7 @@ require __DIR__ . '/../../includes/header.php';
             <span class="muted small">Un étudiant déjà exporté a peut-être un compte Moodle : le supprimer ici ne supprime pas ce compte.</span>
           <?php endif; ?>
           <button class="btn" type="submit" name="action" value="delete"
-                  data-confirm="Supprimer les inscriptions cochées de ce groupe ?" data-confirm-danger>Supprimer la sélection</button>
+                  data-confirm="Supprimer les inscriptions cochées de ce groupe ?" data-confirm-danger><?= ui_icon('trash') ?>Supprimer la sélection</button>
         </div>
       </form>
     </section>

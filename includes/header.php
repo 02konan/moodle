@@ -17,8 +17,8 @@ $active    ??= '';
 $i = fn(string $paths) => '<svg viewBox="0 0 24 24" aria-hidden="true">' . $paths . '</svg>';
 $navLinks = [
     'dashboard'    => ['./index.php',           'Tableau de bord', $i('<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>')],
-    'inscriptions' => ['./inscriptions.php',    'Inscriptions',    $i('<path d="M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3.5"/><path d="M21 20v-1a4 4 0 0 0-3-3.87M15.5 4.1a3.5 3.5 0 0 1 0 6.8"/>')],
-    'cohorts'      => ['./cohorts.php',         'Cohortes',        $i('<path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/>')],
+    'inscriptions' => ['./inscriptions.php',    'Inscriptions',    $i('<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V2.8h6V4"/><path d="M9 10h6M9 14h6M9 18h3"/>')],
+    'cohorts'      => ['./cohorts.php',         'Cohortes',        $i('<path d="M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3.5"/><path d="M21 20v-1a4 4 0 0 0-3-3.87M15.5 4.1a3.5 3.5 0 0 1 0 6.8"/>')],
     'subjects'     => ['./cohort-subjects.php', 'Matières',        $i('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M8 7h7M8 11h5"/>')],
     'courses'      => ['./courses.php',         'Noms des cours',  $i('<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')],
     'plans'        => ['./programmes.php',      'Cours',           $i('<path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/>')],
@@ -50,8 +50,9 @@ $flashData = json_encode(flash_pull(), JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | 
 
   <aside class="bo-side" id="sidebar" aria-label="Navigation principale">
     <div class="bo-side-head">
-      <a class="bo-brand" href="./index.php" aria-label="Tableau de bord">
-        <span class="bo-logo"><img src="../assets/logo.png" alt="" width="30" height="30"></span>
+      <!-- Sidebar réduite : le logo sert à la déplier (cf. admin-ui.js) -->
+      <a class="bo-brand" href="./index.php" aria-label="Tableau de bord" data-label="Déplier le menu">
+        <span class="bo-logo"><?= ui_icon('layers') ?></span>
         <span class="bo-brand-text"><strong>Backoffice</strong><small>Inscriptions Moodle</small></span>
       </a>
       <button class="bo-collapse" type="button" data-side-collapse aria-label="Réduire le menu" title="Réduire / déplier le menu">
