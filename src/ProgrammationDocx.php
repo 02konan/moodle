@@ -15,8 +15,6 @@ final class ProgrammationDocx
     private const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
     private const TEXT_WIDTH = 9638;   // largeur utile A4 (marges 2 cm), en twips
 
-    private int $quizNo = 0;
-
     public function __construct(private array $plan, private array $tree, private ?string $logoPath = null) {}
 
     /** Contenu binaire du fichier .docx. */
@@ -51,22 +49,18 @@ final class ProgrammationDocx
     private function document(): string
     {
         $b = $this->p($this->run('Programmation des évaluations'), 'Title');
-        $b .= $this->p($this->run($this->plan['title'], ['b' => true, 'sz' => 26]), null, ['after' => 240]);
-        foreach (['Professeur', 'Classe', 'Section'] as $label) $b .= $this->fillLine($label . ' :', 0, 200);
+        $b .= $this->p($this->run($this->plan['title'], ['b' => true, 'sz' => 20]), null, ['after' => 200]);
+        $b .= $this->fillRow(['Professeur :', 'Classe :', 'Section :'], [4400, 7200, self::TEXT_WIDTH]);
 
-        $sectionNo = 0;
         foreach ($this->tree as $section) {
-            $sectionNo++;
-            $b .= $this->p($this->run("$sectionNo. " . $section['title']), 'Heading1');
-            $subNo = 0;
+            $b .= $this->p($this->run($section['title']), 'Heading1');
             $hasContent = false;
             foreach ($section['children'] as $child) {
                 $hasContent = true;
                 if ($child['type'] === 'quiz') {
                     $b .= $this->quiz($child, 0);
                 } else {
-                    $subNo++;
-                    $b .= $this->p($this->run("$sectionNo.$subNo " . $child['title']), 'Heading2');
+                    $b .= $this->p($this->run($child['title']), 'Heading2');
                     foreach ($child['children'] as $q) $b .= $this->quiz($q, 360);
                     if (!$child['children']) $b .= $this->p($this->run('Aucun QCM.', ['i' => true, 'color' => '888888']), null, ['ind' => 360]);
                 }
@@ -82,10 +76,18 @@ final class ProgrammationDocx
 
     private function quiz(array $q, int $indent): string
     {
-        $this->quizNo++;
-        $title = $this->p($this->run("QCM {$this->quizNo} : ", ['b' => true, 'color' => 'F98012']) . $this->run($q['title'], ['b' => true]), null,
+        $title = $this->p($this->run($q['title'], ['b' => true]), null,
             ['ind' => $indent, 'before' => 120, 'after' => 0, 'keepNext' => true]);
         return $title . $this->fillLine('Date et heure :', $indent + 360, 120);
+    }
+
+    /** Plusieurs champs sur une ligne : « Professeur : ……  Classe : ……  Section : …… » (points jusqu'aux positions données, en twips). */
+    private function fillRow(array $labels, array $stops): string
+    {
+        $tabs = '<w:tabs>' . implode('', array_map(fn($pos) => '<w:tab w:val="right" w:leader="dot" w:pos="' . $pos . '"/>', $stops)) . '</w:tabs>';
+        $runs = '';
+        foreach ($labels as $i => $label) $runs .= $this->run(($i ? '  ' : '') . $label . ' ') . '<w:r><w:tab/></w:r>';
+        return $this->p($runs, null, ['after' => 160, 'tabs' => $tabs, 'line' => 360]);
     }
 
     /** « Libellé : ........ » jusqu'à la marge droite (tabulation avec points de suite). */
@@ -104,8 +106,8 @@ final class ProgrammationDocx
             . '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="648000" cy="648000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
             . '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>' : '';
         $none = '<w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/>';
-        $text = $this->p($this->run('PROGRAMMATION DES ÉVALUATIONS', ['b' => true, 'sz' => 20]), null, ['jc' => 'right', 'after' => 0])
-              . $this->p($this->run($this->plan['title'], ['sz' => 18, 'color' => '666666']), null, ['jc' => 'right', 'after' => 0]);
+        $text = $this->p($this->run('PROGRAMMATION DES ÉVALUATIONS', ['b' => true, 'sz' => 16]), null, ['jc' => 'right', 'after' => 0])
+              . $this->p($this->run($this->plan['title'], ['sz' => 14, 'color' => '666666']), null, ['jc' => 'right', 'after' => 0]);
         $table = '<w:tbl><w:tblPr><w:tblW w:w="' . self::TEXT_WIDTH . '" w:type="dxa"/><w:tblBorders>' . $none . '</w:tblBorders>'
                . '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="1300"/><w:gridCol w:w="' . (self::TEXT_WIDTH - 1300) . '"/></w:tblGrid><w:tr>'
                . '<w:tc><w:tcPr><w:tcW w:w="1300" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>' . $this->p($logo, null, ['after' => 0]) . '</w:tc>'
@@ -118,11 +120,11 @@ final class ProgrammationDocx
 
     private function footer(): string
     {
-        $rpr = '<w:rPr><w:color w:val="888888"/><w:sz w:val="16"/></w:rPr>';
+        $rpr = '<w:rPr><w:color w:val="888888"/><w:sz w:val="14"/></w:rPr>';
         $field = fn(string $code) => '<w:r>' . $rpr . '<w:fldChar w:fldCharType="begin"/></w:r><w:r>' . $rpr . '<w:instrText xml:space="preserve"> ' . $code . ' </w:instrText></w:r>'
             . '<w:r>' . $rpr . '<w:fldChar w:fldCharType="separate"/></w:r><w:r>' . $rpr . '<w:t>1</w:t></w:r><w:r>' . $rpr . '<w:fldChar w:fldCharType="end"/></w:r>';
-        $runs = $this->run($this->plan['title'] . ' — Page ', ['sz' => 16, 'color' => '888888']) . $field('PAGE')
-              . $this->run(' / ', ['sz' => 16, 'color' => '888888']) . $field('NUMPAGES');
+        $runs = $this->run($this->plan['title'] . ' — Page ', ['sz' => 14, 'color' => '888888']) . $field('PAGE')
+              . $this->run(' / ', ['sz' => 14, 'color' => '888888']) . $field('NUMPAGES');
         return $this->xml('<w:ftr xmlns:w="' . self::W . '" xmlns:r="' . self::R . '">' . $this->p($runs, null, ['jc' => 'right', 'after' => 0]) . '</w:ftr>');
     }
 
@@ -133,12 +135,12 @@ final class ProgrammationDocx
             '<w:style w:type="paragraph" w:styleId="' . $id . '"><w:name w:val="' . $name . '"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/>'
             . '<w:pPr>' . $ppr . '</w:pPr><w:rPr>' . $rpr . '</w:rPr></w:style>';
         return $this->xml('<w:styles xmlns:w="' . self::W . '">'
-            . '<w:docDefaults><w:rPrDefault><w:rPr>' . $font . '<w:sz w:val="22"/><w:lang w:val="fr-FR"/></w:rPr></w:rPrDefault>'
+            . '<w:docDefaults><w:rPrDefault><w:rPr>' . $font . '<w:sz w:val="18"/><w:lang w:val="fr-FR"/></w:rPr></w:rPrDefault>'
             . '<w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="259" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'
             . '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>'
-            . $style('Title', 'Title', '<w:spacing w:before="0" w:after="60"/>', '<w:b/><w:caps/><w:color w:val="F98012"/><w:sz w:val="34"/>')
-            . $style('Heading1', 'heading 1', '<w:keepNext/><w:spacing w:before="360" w:after="120"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="DDDDDD"/></w:pBdr><w:outlineLvl w:val="0"/>', '<w:b/><w:color w:val="111111"/><w:sz w:val="28"/>')
-            . $style('Heading2', 'heading 2', '<w:keepNext/><w:spacing w:before="200" w:after="80"/><w:ind w:left="360"/><w:outlineLvl w:val="1"/>', '<w:b/><w:color w:val="444444"/><w:sz w:val="24"/>')
+            . $style('Title', 'Title', '<w:spacing w:before="0" w:after="60"/>', '<w:b/><w:caps/><w:color w:val="F98012"/><w:sz w:val="26"/>')
+            . $style('Heading1', 'heading 1', '<w:keepNext/><w:spacing w:before="240" w:after="80"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="DDDDDD"/></w:pBdr><w:outlineLvl w:val="0"/>', '<w:b/><w:color w:val="111111"/><w:sz w:val="22"/>')
+            . $style('Heading2', 'heading 2', '<w:keepNext/><w:spacing w:before="140" w:after="60"/><w:ind w:left="360"/><w:outlineLvl w:val="1"/>', '<w:b/><w:color w:val="444444"/><w:sz w:val="20"/>')
             . '</w:styles>');
     }
 
