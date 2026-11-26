@@ -74,35 +74,33 @@ require __DIR__ . '/../../includes/header.php';
       <button class="btn" type="submit">Rechercher</button>
       <?php if ($q !== ''): ?><a class="btn" href="./programmes.php">Tout afficher</a><?php endif; ?>
     </form>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Cours</th><th>Sections</th><th>Sous-sections</th><th>QCM</th><th>Modifié le</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($plans as $p): $c = $counts[(int)$p['id']] ?? ['sections' => 0, 'subsections' => 0, 'quizzes' => 0]; ?>
-          <tr>
-            <td><a class="link" href="./programme.php?id=<?= (int)$p['id'] ?>"><strong><?= e($p['title']) ?></strong></a></td>
-            <td><?= $c['sections'] ?></td>
-            <td><?= $c['subsections'] ?></td>
-            <td><strong><?= $c['quizzes'] ?></strong></td>
-            <td class="small muted"><?= e(date('d/m/Y H:i', strtotime($p['updated_at']))) ?></td>
-            <td class="row-actions">
-              <a class="btn" href="./programme.php?id=<?= (int)$p['id'] ?>">Ouvrir</a>
-              <a class="btn btn-primary" href="./programme-word.php?id=<?= (int)$p['id'] ?>" data-no-async>Fiche Word</a>
-              <form method="post" action="./programmes.php">
-                <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-                <button class="icon-btn" type="submit" title="Supprimer" aria-label="Supprimer"
-                        onclick="return confirm('Supprimer le cours « <?= e(addslashes($p['title'])) ?> » et toute sa structure ?');">✕</button>
-              </form>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-        <?php if (!$plans): ?>
-          <tr><td colspan="6" class="empty"><?= $q !== '' ? 'Aucun cours ne correspond à cette recherche.' : 'Aucun cours pour l\'instant : créez-en un ci-dessus.' ?></td></tr>
-        <?php endif; ?>
-        </tbody>
-      </table>
+    <?php if (!$plans): ?>
+      <p class="empty"><?= $q !== '' ? 'Aucun cours ne correspond à cette recherche.' : 'Aucun cours pour l\'instant : créez-en un ci-dessus.' ?></p>
+    <?php endif; ?>
+    <div class="plan-grid">
+      <?php foreach ($plans as $p): $c = $counts[(int)$p['id']] ?? ['sections' => 0, 'subsections' => 0, 'quizzes' => 0]; ?>
+        <article class="plan-card">
+          <a class="plan-card-title" href="./programme.php?id=<?= (int)$p['id'] ?>"><?= e($p['title']) ?></a>
+          <div class="plan-card-stats">
+            <span><strong><?= $c['sections'] ?></strong> section<?= $c['sections'] > 1 ? 's' : '' ?></span>
+            <span><strong><?= $c['subsections'] ?></strong> sous-section<?= $c['subsections'] > 1 ? 's' : '' ?></span>
+            <span class="plan-card-quiz"><strong><?= $c['quizzes'] ?></strong> QCM</span>
+          </div>
+          <p class="muted small">Modifié le <?= e(date('d/m/Y à H:i', strtotime($p['updated_at']))) ?></p>
+          <div class="plan-card-actions">
+            <a class="btn" href="./programme.php?id=<?= (int)$p['id'] ?>">Ouvrir</a>
+            <a class="btn btn-primary" href="./programme-word.php?id=<?= (int)$p['id'] ?>" data-no-async>Fiche Word</a>
+            <span class="bulk-spacer"></span>
+            <form method="post" action="./programmes.php">
+              <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+              <button class="icon-btn" type="submit" title="Supprimer" aria-label="Supprimer"
+                      onclick="return confirm('Supprimer le cours « <?= e(addslashes($p['title'])) ?> » et toute sa structure ?');">✕</button>
+            </form>
+          </div>
+        </article>
+      <?php endforeach; ?>
     </div>
   </section>
 <?php require __DIR__ . '/../../includes/footer.php'; ?>
