@@ -19,7 +19,8 @@
     function refresh() {
       const all = rows(), sel = picked();
       counts.forEach((c) => { c.textContent = sel.length; });
-      $('bulk-delete').dataset.confirm = `Supprimer définitivement ${sel.length} étudiant(s) ? Cette action est irréversible.`;
+      $('bulk-delete').dataset.confirmTitle = `Supprimer ${sel.length} inscription${sel.length > 1 ? 's' : ''} ?`;
+      $('bulk-delete').dataset.confirm = 'Cette action est irréversible.';
       bar.hidden = sel.length === 0;
       all.forEach((c) => c.closest('tr').classList.toggle('is-selected', c.checked));
       if (checkAll) {
@@ -94,7 +95,7 @@
       e.preventDefault();
       const submitter = e.submitter;
       dlg.close();
-      window.confirmDialog({ title: 'Modification de masse', text: `Appliquer ces modifications à ${picked().length} étudiant(s) ?`, ok: 'Appliquer' })
+      window.confirmDialog({ title: 'Modifier la sélection ?', text: `${picked().length} étudiant(s) seront mis à jour.`, ok: 'Appliquer' })
         .then((ok) => {
           if (!ok) { dlg.showModal(); return; }
           form.dataset.confirmed = '1';

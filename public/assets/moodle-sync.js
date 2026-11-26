@@ -67,13 +67,13 @@
     if (one) {
       e.preventDefault();
       const c = one.dataset.moodleSync;
-      window.confirmDialog({ title: 'Créer dans Moodle', text: `Créer les comptes, la cohorte, les inscriptions et les groupes de ${c} dans Moodle ?`, ok: 'Créer dans Moodle' })
+      window.confirmDialog({ title: 'Créer dans Moodle ?', text: `Comptes, cohorte, inscriptions et groupes de ${c}.`, ok: 'Créer' })
         .then((ok) => { if (ok) run([c]); });
       return;
     }
     if (e.target.closest('#cohort-bulk-sync')) {
       const list = [...document.querySelectorAll('input.cohort-check:checked')].map((c) => c.value);
-      if (list.length) window.confirmDialog({ title: 'Créer dans Moodle', text: `Créer les comptes, cohortes, inscriptions et groupes de ${list.length} cohorte(s) dans Moodle ?`, ok: 'Créer dans Moodle' })
+      if (list.length) window.confirmDialog({ title: 'Créer dans Moodle ?', text: `Comptes, cohortes, inscriptions et groupes de ${list.length} cohorte(s).`, ok: 'Créer' })
         .then((ok) => { if (ok) run(list); });
       return;
     }

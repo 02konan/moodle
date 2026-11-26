@@ -161,7 +161,7 @@ require __DIR__ . '/../../includes/header.php';
           <a class="btn" href="./duplicates.php<?= $q !== '' ? '?q=' . e(urlencode($q)) : '' ?>">Annuler</a>
           <a class="btn" href="./duplicates.php?moodle=1&amp;csv=1<?= e($qs) ?>" data-no-async>CSV de suppression (import Moodle)</a>
           <button class="btn btn-primary" type="submit" name="action" value="moodle_apply" <?= $summary['db'] ? '' : 'disabled' ?>
-                  data-confirm="Supprimer définitivement <?= $summary['moodle'] ?> compte(s) dans Moodle et <?= $summary['db'] ?> inscription(s) dans la base ?" data-confirm-danger data-confirm-ok="Appliquer le nettoyage">
+                  data-confirm-title="Appliquer le nettoyage ?" data-confirm="<?= $summary['moodle'] ?> compte(s) Moodle et <?= $summary['db'] ?> inscription(s) seront supprimés. Cette action est irréversible." data-confirm-danger data-confirm-ok="Nettoyer">
             Appliquer le nettoyage</button>
         </form>
       <?php endif; ?>
@@ -205,7 +205,7 @@ require __DIR__ . '/../../includes/header.php';
                 <?php endif; ?>
                 <td class="row-actions">
                   <button class="btn" type="submit" name="keep" value="<?= (int)$s['id'] ?>"
-                          data-confirm="Garder <?= e($s['username']) ?> et supprimer les <?= count($g) - 1 ?> autre(s) inscription(s) de ce groupe ?" data-confirm-danger data-confirm-ok="Garder celui-ci">Garder celui-ci</button>
+                          data-confirm-title="Garder <?= e($s['username']) ?> ?" data-confirm="Les <?= count($g) - 1 ?> autre(s) inscription(s) du groupe seront supprimées." data-confirm-danger data-confirm-ok="Garder">Garder celui-ci</button>
                   <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$s['id'], 'back' => ltrim($self, './')])) ?>" title="Modifier" aria-label="Modifier"><?= ui_icon('pencil') ?></a>
                 </td>
               </tr>
@@ -219,7 +219,7 @@ require __DIR__ . '/../../includes/header.php';
             <span class="muted small">Un étudiant déjà exporté a peut-être un compte Moodle : le supprimer ici ne supprime pas ce compte.</span>
           <?php endif; ?>
           <button class="btn" type="submit" name="action" value="delete"
-                  data-confirm="Supprimer les inscriptions cochées de ce groupe ?" data-confirm-danger><?= ui_icon('trash') ?>Supprimer la sélection</button>
+                  data-confirm-title="Supprimer la sélection ?" data-confirm="Cette action est irréversible." data-confirm-danger><?= ui_icon('trash') ?>Supprimer la sélection</button>
         </div>
       </form>
     </section>

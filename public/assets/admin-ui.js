@@ -88,8 +88,8 @@
     e.preventDefault();
     e.stopImmediatePropagation();
     confirmDialog({
-      title: el.dataset.confirmTitle || (el.hasAttribute('data-confirm-danger') ? 'Action définitive' : 'Confirmer l\'action'),
-      text: el.dataset.confirm,
+      title: el.dataset.confirmTitle || (el.hasAttribute('data-confirm-danger') ? 'Suppression' : 'Confirmation'),
+      text: el.dataset.confirm || (el.hasAttribute('data-confirm-danger') ? 'Cette action est irréversible.' : ''),
       ok: el.dataset.confirmOk || (el.hasAttribute('data-confirm-danger') ? 'Supprimer' : 'Confirmer'),
       danger: el.hasAttribute('data-confirm-danger'),
     }).then((ok) => {
@@ -115,23 +115,37 @@
     }
   }, true);
 
-  // Lignes dépliables : <tr data-expand="id-de-la-ligne-détail"> + bouton [data-row-toggle]
-  function toggleRow(row, open) {
-    const detail = document.getElementById(row.dataset.expand);
-    if (!detail) return;
-    open ??= detail.hidden;
-    detail.hidden = !open;
-    row.classList.toggle('is-expanded', open);
-    row.querySelector('[data-row-toggle]')?.setAttribute('aria-expanded', String(open));
+  // Fiches en fenêtre modale : <tr data-modal="id-du-template" data-modal-title="…"> (+ bouton [data-open-modal])
+  let modal = null;
+  function detailModal() {
+    if (modal && document.body.contains(modal)) return modal;
+    modal = document.createElement('dialog');
+    modal.className = 'modal detail-modal';
+    modal.setAttribute('aria-labelledby', 'detail-modal-title');
+    modal.innerHTML = '<div class="modal-head"><h2 id="detail-modal-title"></h2>'
+      + '<button class="icon-btn" type="button" data-close-modal aria-label="Fermer"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'
+      + '<div class="modal-content"></div>';
+    modal.addEventListener('click', (e) => { if (e.target === modal || e.target.closest('[data-close-modal]')) modal.close(); });
+    document.body.appendChild(modal);
+    return modal;
+  }
+  function openDetail(row) {
+    const tpl = document.getElementById(row.dataset.modal);
+    if (!tpl) return;
+    const m = detailModal();
+    m.querySelector('#detail-modal-title').textContent = row.dataset.modalTitle || 'Détails';
+    m.querySelector('.modal-content').replaceChildren(tpl.content.cloneNode(true));
+    m.showModal();
   }
   document.addEventListener('click', (e) => {
-    const row = e.target.closest('tr[data-expand]');
+    const row = e.target.closest('tr[data-modal]');
     if (!row) return;
-    if (e.target.closest('[data-row-toggle]')) { toggleRow(row); return; }
+    if (e.target.closest('[data-open-modal]')) { openDetail(row); return; }
     if (e.target.closest('a, button, input, label, select, textarea, form')) return;
-    if (window.getSelection()?.toString()) return;   // sélection de texte : ne pas replier
-    toggleRow(row);
+    if (window.getSelection()?.toString()) return;   // sélection de texte : ne pas ouvrir
+    openDetail(row);
   });
+  document.addEventListener('app:load', () => { if (modal?.open) modal.close(); });
 
   window.toast = toast;
   window.notify = notify;

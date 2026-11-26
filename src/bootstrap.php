@@ -68,6 +68,7 @@ function ui_icon(string $name): string
         'up'     => '<path d="m6 15 6-6 6 6"/>',
         'down'   => '<path d="m6 9 6 6 6-6"/>',
         'x'      => '<path d="M18 6 6 18M6 6l12 12"/>',
+        'eye'    => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
         'layers' => '<path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/>',
     ];
     return '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">' . ($paths[$name] ?? '') . '</svg>';
