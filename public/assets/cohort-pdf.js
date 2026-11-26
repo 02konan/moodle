@@ -122,31 +122,41 @@
       doc.setDrawColor(...G.accent); doc.setLineWidth(0.6); doc.line(M, 29, PW - M, 29);
     };
 
-    // Une ligne par cohorte programmée ; QCM, section et sous-section fusionnés sur ses lignes
+    // Une ligne fusionnée annonce chaque section / sous-section ; les QCM qui suivent leur appartiennent.
+    const COLS = 5;
+    const band = (text, level) => [{
+      content: text, colSpan: COLS,
+      styles: level === 0
+        ? { fillColor: [235, 235, 232], textColor: G.ink, fontStyle: 'bold', fontSize: 9.5 }
+        : { fillColor: [247, 247, 245], textColor: G.text, fontStyle: 'bolditalic', fontSize: 8.8, cellPadding: { top: 1.6, bottom: 1.6, left: 7, right: 2 } },
+    }];
     const body = [];
+    let section = null, sub = null;
     data.quizzes.forEach((q) => {
+      if (q.section !== section) { section = q.section; sub = null; body.push(band(section, 0)); }
+      if (q.subsection && q.subsection !== sub) body.push(band(q.subsection, 1));
+      else if (!q.subsection && sub) body.push(band(section + ' (suite)', 0));   // retour à la section après une sous-section
+      sub = q.subsection;
+      const indent = q.subsection ? 7 : 3;
       const n = Math.max(q.schedules.length, 1);
-      const first = [
-        { content: q.section, rowSpan: n }, { content: q.subsection || '—', rowSpan: n },
-        { content: q.quiz, rowSpan: n, styles: { fontStyle: 'bold' } },
-      ];
+      const quizCell = { content: q.quiz, rowSpan: n, styles: { fontStyle: 'bold', cellPadding: { top: 2, bottom: 2, left: indent, right: 2 } } };
       if (!q.schedules.length) {
-        body.push([...first, { content: 'Non programmé', colSpan: 4, styles: { fontStyle: 'italic', textColor: G.soft } }]);
+        body.push([quizCell, { content: 'Non programmé', colSpan: 4, styles: { fontStyle: 'italic', textColor: G.soft } }]);
         return;
       }
-      q.schedules.forEach((s, i) => body.push([...(i === 0 ? first : []), s.cohort, s.opens, s.closes, s.status]));
+      q.schedules.forEach((s, i) => body.push([...(i === 0 ? [quizCell] : []), s.cohort, s.opens, s.closes, s.status]));
     });
-    if (!body.length) body.push([{ content: 'Ce cours ne contient encore aucun QCM.', colSpan: 7, styles: { halign: 'center', fontStyle: 'italic', textColor: G.soft } }]);
+    if (!body.length) body.push([{ content: 'Ce cours ne contient encore aucun QCM.', colSpan: COLS, styles: { halign: 'center', fontStyle: 'italic', textColor: G.soft } }]);
 
     doc.autoTable({
       startY: 34,
       margin: { top: 34, left: M, right: M, bottom: 14 },
-      head: [['Section', 'Sous-section', 'QCM', 'Cohorte', 'Ouverture', 'Fermeture', 'État']],
+      head: [['QCM', 'Cohorte', 'Ouverture', 'Fermeture', 'État']],
       body,
       theme: 'grid',
       styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2, textColor: G.text, lineColor: G.line, lineWidth: 0.15, valign: 'middle' },
       headStyles: { fillColor: G.headBg, textColor: G.headInk, fontStyle: 'bold' },
-      columnStyles: { 0: { cellWidth: 44 }, 1: { cellWidth: 40 }, 2: { cellWidth: 62 }, 3: { cellWidth: 42 }, 4: { cellWidth: 29 }, 5: { cellWidth: 29 }, 6: { cellWidth: 'auto' } },
+      columnStyles: { 0: { cellWidth: 105 }, 1: { cellWidth: 55 }, 2: { cellWidth: 36 }, 3: { cellWidth: 36 }, 4: { cellWidth: 'auto' } },
       rowPageBreak: 'avoid',
       didDrawPage: header,
     });

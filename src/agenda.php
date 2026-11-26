@@ -113,28 +113,26 @@ function schedule_status(array $s, ?int $now = null): string
 const SCHEDULE_STATUS = ['upcoming' => 'À venir', 'open' => 'Ouvert', 'closed' => 'Fermé'];
 
 /**
- * Événements du calendrier entre deux dates (ouvertures et fermetures séparées, comme Moodle) :
- * [['at', 'kind' (open|close), 'schedule', 'quiz', 'plan_id', 'plan', 'cohort'], …]
+ * Programmations qui chevauchent la période [$from, $to[ (filtres cohorte et titre de cours),
+ * triées par ouverture : lignes de quiz_schedules + quiz, plan_id, plan.
  */
-function agenda_events(PDO $pdo, string $from, string $to, string $cohort = '', int $planId = 0, string $course = ''): array
+function agenda_schedules(PDO $pdo, string $from, string $to, string $cohort = '', string $course = ''): array
 {
-    $where = '((s.opens_at >= ? AND s.opens_at < ?) OR (s.closes_at >= ? AND s.closes_at < ?))';
-    $params = [$from, $to, $from, $to];
-    if ($cohort !== '') { $where .= ' AND s.cohort LIKE ?'; $params[] = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $cohort) . '%'; }
-    if ($planId > 0)   { $where .= ' AND p.id = ?'; $params[] = $planId; }
-    if ($course !== '') { $where .= ' AND p.title LIKE ?'; $params[] = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $course) . '%'; }
+    $like = fn(string $v) => '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $v) . '%';
+    $where = 's.opens_at < ? AND s.closes_at >= ?';
+    $params = [$to, $from];
+    if ($cohort !== '') { $where .= ' AND s.cohort LIKE ?'; $params[] = $like($cohort); }
+    if ($course !== '') { $where .= ' AND p.title LIKE ?'; $params[] = $like($course); }
     $st = $pdo->prepare("SELECT s.*, i.title quiz, p.id plan_id, p.title plan
                          FROM quiz_schedules s JOIN course_plan_items i ON i.id = s.item_id JOIN course_plans p ON p.id = i.plan_id
-                         WHERE $where");
+                         WHERE $where ORDER BY s.opens_at, s.closes_at, s.cohort");
     $st->execute($params);
-    $events = [];
-    foreach ($st->fetchAll() as $r) {
-        foreach (['open' => 'opens_at', 'close' => 'closes_at'] as $kind => $col) {
-            if ($r[$col] >= $from && $r[$col] < $to) {
-                $events[] = ['at' => $r[$col], 'kind' => $kind, 'schedule' => $r, 'quiz' => $r['quiz'], 'plan_id' => (int)$r['plan_id'], 'plan' => $r['plan'], 'cohort' => $r['cohort']];
-            }
-        }
-    }
-    usort($events, fn($a, $b) => [$a['at'], $a['kind'] === 'close'] <=> [$b['at'], $b['kind'] === 'close']);
-    return $events;
+    return $st->fetchAll();
+}
+
+/** Horaire d'une programmation : « 08:00 → 12:00 », ou « 08:00 → 30/11 18:00 » si la fermeture est un autre jour. */
+function schedule_hours(array $s): string
+{
+    $o = strtotime($s['opens_at']); $c = strtotime($s['closes_at']);
+    return date('H:i', $o) . ' → ' . (date('Y-m-d', $o) === date('Y-m-d', $c) ? date('H:i', $c) : date('d/m H:i', $c));
 }

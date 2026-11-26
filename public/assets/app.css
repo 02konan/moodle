@@ -628,3 +628,11 @@ tbody tr.plan-delete td:not(:last-child):not(:nth-last-child(2)) { opacity: .75;
 .ev-close { background: #fde8e8; box-shadow: inset 2px 0 0 #b00020; }
 a.cal-ev:hover { filter: brightness(.95); }
 @media (max-width: 700px) { .cal-day { min-height: 64px; } .cal-ev small { display: none; } }
+
+/* Agenda : un badge par programmation (ouverture → fermeture), coloré selon l'état */
+.cal-hours { display: block; font-weight: 700; font-size: .66rem; }
+.ev-upcoming { background: #e8eefc; box-shadow: inset 3px 0 0 #1d3f8f; }
+.ev-open { background: #e5f4ea; box-shadow: inset 3px 0 0 #1f7a3f; }
+.ev-closed { background: #f1f1ef; box-shadow: inset 3px 0 0 #9a9a96; color: var(--muted); }
+.cal-legend .cal-ev { display: inline-block; }
+.sched-badge { display: inline-block; padding: .15rem .5rem; border-radius: 6px; font-size: .75rem; font-weight: 600; white-space: nowrap; }

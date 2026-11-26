@@ -18,14 +18,17 @@ $month = $month->modify('first day of this month');
 $next = $month->modify('+1 month');
 $prev = $month->modify('-1 month');
 
-$events = agenda_events($pdo, $month->format('Y-m-d 00:00:00'), $next->format('Y-m-d 00:00:00'), $cohort, 0, $course);
+// Un badge par programmation, le jour de l'ouverture (ou le 1er du mois si elle a ouvert avant)
+$monthStart = $month->format('Y-m-d 00:00:00');
+$schedules = agenda_schedules($pdo, $monthStart, $next->format('Y-m-d 00:00:00'), $cohort, $course);
 $byDay = [];
-foreach ($events as $ev) $byDay[substr($ev['at'], 0, 10)][] = $ev;
-$upcoming = array_slice(agenda_events($pdo, date('Y-m-d H:i:s'), date('Y-m-d H:i:s', strtotime('+60 days')), $cohort, 0, $course), 0, 15);
+foreach ($schedules as $s) $byDay[substr(max($s['opens_at'], $monthStart), 0, 10)][] = $s;
+// Programmations pas encore fermées qui ouvrent dans les 60 jours (ou déjà ouvertes)
+$upcoming = array_slice(agenda_schedules($pdo, date('Y-m-d H:i:s'), date('Y-m-d H:i:s', strtotime('+60 days')), $cohort, $course), 0, 20);
 
 $filters = array_filter(['cohort' => $cohort, 'course' => $course]);
 $url = fn(array $extra = []) => './agenda.php?' . http_build_query(array_merge($filters, $extra));
-$quizUrl = fn(array $ev) => './quiz-agenda.php?plan=' . $ev['plan_id'] . '&item=' . (int)$ev['schedule']['item_id'];
+$quizUrl = fn(array $s) => './quiz-agenda.php?plan=' . (int)$s['plan_id'] . '&item=' . (int)$s['item_id'];
 
 $months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 $days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -66,7 +69,7 @@ require __DIR__ . '/../../includes/header.php';
       <h2><?= ucfirst($months[(int)$month->format('n') - 1]) ?> <?= $month->format('Y') ?></h2>
       <a class="btn" href="<?= e($url(['m' => $next->format('Y-m')])) ?>" aria-label="Mois suivant">→</a>
       <span class="bulk-spacer"></span>
-      <span class="cal-legend"><span class="cal-ev ev-open">▶ ouverture</span><span class="cal-ev ev-close">■ fermeture</span></span>
+      <span class="cal-legend"><?php foreach (SCHEDULE_STATUS as $k => $l): ?><span class="cal-ev ev-<?= $k ?>"><?= $l ?></span><?php endforeach; ?></span>
       <a class="btn" href="<?= e($url()) ?>">Aujourd'hui</a>
     </div>
 
@@ -75,35 +78,36 @@ require __DIR__ . '/../../includes/header.php';
       <?php for ($day = $start; $day <= $end; $day = $day->modify('+1 day')): $key = $day->format('Y-m-d'); ?>
         <div class="cal-day<?= $day->format('m') !== $month->format('m') ? ' is-out' : '' ?><?= $key === $today ? ' is-today' : '' ?>">
           <span class="cal-num"><?= $day->format('j') ?></span>
-          <?php foreach ($byDay[$key] ?? [] as $ev): ?>
-            <a class="cal-ev ev-<?= $ev['kind'] ?>" href="<?= e($quizUrl($ev)) ?>"
-               title="<?= e(($ev['kind'] === 'open' ? 'Ouverture' : 'Fermeture') . ' ' . substr($ev['at'], 11, 5) . ' — ' . $ev['quiz'] . ' — ' . $ev['plan'] . ' — ' . $ev['cohort']) ?>">
-              <?= $ev['kind'] === 'open' ? '▶' : '■' ?> <?= e(substr($ev['at'], 11, 5)) ?> <?= e($ev['quiz']) ?>
-              <small><?= e($ev['cohort']) ?></small>
+          <?php foreach ($byDay[$key] ?? [] as $sc): $stt = schedule_status($sc); ?>
+            <a class="cal-ev ev-<?= $stt ?>" href="<?= e($quizUrl($sc)) ?>"
+               title="<?= e($sc['quiz'] . ' — ' . $sc['plan'] . ' — ' . $sc['cohort'] . "\nOuverture : " . date('d/m/Y H:i', strtotime($sc['opens_at'])) . "\nFermeture : " . date('d/m/Y H:i', strtotime($sc['closes_at'])) . ' (' . SCHEDULE_STATUS[$stt] . ')') ?>">
+              <span class="cal-hours"><?= e(schedule_hours($sc)) ?></span>
+              <?= e($sc['quiz']) ?>
+              <small><?= e($sc['cohort']) ?></small>
             </a>
           <?php endforeach; ?>
         </div>
       <?php endfor; ?>
     </div>
-    <?php if (!$events): ?><p class="muted small">Aucune ouverture ni fermeture ce mois-ci<?= $filters ? ' pour ces filtres' : '' ?>.</p><?php endif; ?>
+    <?php if (!$schedules): ?><p class="muted small">Aucune programmation ce mois-ci<?= $filters ? ' pour ces filtres' : '' ?>.</p><?php endif; ?>
   </section>
 
   <section class="panel reveal">
-    <h2>Prochaines échéances <span class="muted small">(60 jours)</span></h2>
+    <h2>Prochaines programmations <span class="muted small">(en cours ou dans les 60 jours)</span></h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Date</th><th></th><th>QCM</th><th>Cours</th><th>Cohorte</th></tr></thead>
+        <thead><tr><th>Ouverture → fermeture</th><th>QCM</th><th>Cours</th><th>Cohorte</th><th>État</th></tr></thead>
         <tbody>
-        <?php foreach ($upcoming as $ev): ?>
+        <?php foreach ($upcoming as $sc): $stt = schedule_status($sc); ?>
           <tr>
-            <td class="small"><?= e(date('d/m/Y H:i', strtotime($ev['at']))) ?></td>
-            <td><span class="tag <?= $ev['kind'] === 'open' ? 'tag-open' : 'tag-closed' ?>"><?= $ev['kind'] === 'open' ? 'Ouverture' : 'Fermeture' ?></span></td>
-            <td><a class="link" href="<?= e($quizUrl($ev)) ?>"><?= e($ev['quiz']) ?></a></td>
-            <td class="small"><?= e($ev['plan']) ?></td>
-            <td><span class="pill"><?= e($ev['cohort']) ?></span></td>
+            <td><span class="sched-badge ev-<?= $stt ?>"><?= e(date('d/m/Y H:i', strtotime($sc['opens_at']))) ?> → <?= e(date('d/m/Y H:i', strtotime($sc['closes_at']))) ?></span></td>
+            <td><a class="link" href="<?= e($quizUrl($sc)) ?>"><?= e($sc['quiz']) ?></a></td>
+            <td class="small"><?= e($sc['plan']) ?></td>
+            <td><span class="pill"><?= e($sc['cohort']) ?></span></td>
+            <td><span class="tag tag-<?= $stt ?>"><?= SCHEDULE_STATUS[$stt] ?></span></td>
           </tr>
         <?php endforeach; ?>
-        <?php if (!$upcoming): ?><tr><td colspan="5" class="empty">Aucune échéance dans les 60 prochains jours.</td></tr><?php endif; ?>
+        <?php if (!$upcoming): ?><tr><td colspan="5" class="empty">Aucune programmation en cours ni dans les 60 prochains jours.</td></tr><?php endif; ?>
         </tbody>
       </table>
     </div>
