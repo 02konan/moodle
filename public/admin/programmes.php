@@ -97,7 +97,7 @@ require __DIR__ . '/../../includes/header.php';
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
               <button class="icon-btn" type="submit" title="Supprimer" aria-label="Supprimer"
-                      onclick="return confirm('Supprimer le cours « <?= e(addslashes($p['title'])) ?> » et toute sa structure ?');">✕</button>
+                      data-confirm="Supprimer le cours « <?= e($p['title']) ?> » et toute sa structure (sections, sous-sections, QCM, agenda) ?" data-confirm-danger>✕</button>
             </form>
           </div>
         </article>

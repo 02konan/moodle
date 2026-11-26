@@ -114,7 +114,7 @@ require __DIR__ . '/../../includes/header.php';
                 <input type="hidden" name="schedule" value="<?= (int)$s['id'] ?>">
                 <button class="icon-btn" type="submit" name="action" value="update" title="Enregistrer les dates" aria-label="Enregistrer les dates">✓</button>
                 <button class="icon-btn" type="submit" name="action" value="delete" title="Supprimer" aria-label="Supprimer"
-                        onclick="return confirm('Supprimer la programmation de <?= e($s['cohort']) ?> ?');">✕</button>
+                        data-confirm="Supprimer la programmation de <?= e($s['cohort']) ?> pour ce QCM ?" data-confirm-danger>✕</button>
               </form>
             </td>
           </tr>

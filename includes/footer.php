@@ -6,10 +6,11 @@
  */
 declare(strict_types=1);
 ?>
-  </main>
+    </main>
+  </div>
 
-  <div id="toasts" class="toasts" aria-live="polite"></div>
-  <script src="<?= e(asset('app.js')) ?>"></script>
+  <script src="<?= e(asset('vendor/sweetalert2.all.min.js')) ?>"></script>
+  <script src="<?= e(asset('admin-ui.js')) ?>"></script>
   <script src="<?= e(asset('admin-ajax.js')) ?>"></script>
   <script src="<?= e(asset('admin-bulk.js')) ?>"></script>
   <script src="<?= e(asset('admin-edit.js')) ?>"></script>

@@ -8,8 +8,7 @@
   const app = () => document.getElementById('app');
   if (!app()) return;
 
-  const notify = (list) => (list || []).forEach((f, i) => setTimeout(() => window.toast?.(f.message, f.type), i * 250));
-  const sidebar = document.getElementById('sidebar');
+  const notify = (list) => (window.notify ? window.notify(list) : (list || []).forEach((f) => window.toast?.(f.message, f.type)));
   let controller = null;
 
   /* ---------- Sidebar mobile ---------- */
@@ -21,7 +20,7 @@
   function pageLoaded(root) {
     try { notify(JSON.parse(root.dataset.flash || '[]')); } catch { /* données absentes */ }
     const active = root.dataset.active || '';
-    sidebar?.querySelectorAll('[data-nav]').forEach((a) => {
+    document.querySelectorAll('[data-nav]').forEach((a) => {
       if (a.dataset.nav === active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     document.dispatchEvent(new CustomEvent('app:load', { detail: { root } }));
@@ -82,6 +81,7 @@
     app().replaceWith(node);
     document.title = title;
     document.body.classList.remove('sidebar-open');
+    document.querySelectorAll('details.bo-pop[open]').forEach((d) => { d.open = false; });
 
     // Les <script> insérés par innerHTML ne s'exécutent pas : on les recrée
     node.querySelectorAll('script').forEach((old) => {

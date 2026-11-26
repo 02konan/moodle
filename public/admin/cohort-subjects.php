@@ -329,7 +329,7 @@ require __DIR__ . '/../../includes/header.php';
             <input type="hidden" name="action" value="sync_filiere">
             <input type="hidden" name="cohort" value="<?= e($selectedCohort) ?>">
             <button class="btn" type="submit"
-                    onclick="return confirm('Ajouter les <?= count($rows) ?> matière(s) de <?= e($selectedCohort) ?> aux <?= count($filiere['others']) ?> autre(s) cohorte(s) de la filière <?= e($filiere['prefix']) ?> ? Les matières déjà présentes ne sont pas modifiées.');">
+                    data-confirm="Ajouter les <?= count($rows) ?> matière(s) de <?= e($selectedCohort) ?> aux <?= count($filiere['others']) ?> autre(s) cohorte(s) de la filière <?= e($filiere['prefix']) ?> ? Les matières déjà présentes ne sont pas modifiées." data-confirm-title="Copier dans la filière" data-confirm-ok="Copier\">
               Copier dans toute la filière <?= e($filiere['prefix']) ?></button>
           </form>
         <?php endif; ?>
@@ -367,13 +367,12 @@ require __DIR__ . '/../../includes/header.php';
                 <td><?= $r['hours'] !== null ? (int)$r['hours'] . ' h' : '<span class="muted">—</span>' ?></td>
                 <td style="text-align:right; white-space:nowrap;">
                   <a class="btn" href="?cohort=<?= urlencode($selectedCohort) ?>&edit=<?= (int)$r['id'] ?>">Modifier</a>
-                  <form method="post" action="./cohort-subjects.php" style="display:inline;"
-                        onsubmit="return confirm('Retirer cette matière de la cohorte ?');">
+                  <form method="post" action="./cohort-subjects.php" style="display:inline;">
                     <input type="hidden" name="csrf"   value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="cohort" value="<?= e($selectedCohort) ?>">
                     <input type="hidden" name="id"     value="<?= (int)$r['id'] ?>">
-                    <button class="btn" type="submit">Supprimer</button>
+                    <button class="btn btn-danger" type="submit" data-confirm="Retirer « <?= e($r['subject']) ?> » de la cohorte <?= e($selectedCohort) ?> ?" data-confirm-danger data-confirm-ok="Retirer">Supprimer</button>
                   </form>
                 </td>
               </tr>

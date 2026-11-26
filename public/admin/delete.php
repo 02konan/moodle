@@ -11,4 +11,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_valid($_POST['csrf'] ?? null))
     flash('Requête invalide.', 'error');
 }
 $back = (string)($_POST['back'] ?? '');
-redirect('./' . ($back !== '' ? '?' . $back : ''));
+redirect('./inscriptions.php' . ($back !== '' ? '?' . $back : ''));

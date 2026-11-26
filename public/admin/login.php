@@ -40,24 +40,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= e(asset('app.css')) ?>">
+  <link rel="stylesheet" href="<?= e(asset('admin.css')) ?>">
 </head>
 <body class="auth-body">
   <main class="auth-card reveal">
-    <div class="brand"><span class="brand-dot"></span> Backoffice</div>
-    <h1>Connexion</h1>
-    <p class="muted">Accès réservé à l'administration.</p>
+    <div class="brand"><img src="../assets/logo.png" alt="" width="40" height="40"> Backoffice · Inscriptions Moodle</div>
+    <div>
+      <h1>Connexion</h1>
+      <p class="muted">Accès réservé à l'administration.</p>
+    </div>
     <form method="post" class="form" autocomplete="on">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-      <label class="field"><span>E-mail</span>
-        <input type="email" name="email" required autofocus></label>
+      <label class="field"><span>Adresse e-mail</span>
+        <input type="email" name="email" required autofocus autocomplete="username" placeholder="admin@exemple.com" value="<?= e((string)($_POST['email'] ?? '')) ?>"></label>
       <label class="field"><span>Mot de passe</span>
-        <input type="password" name="password" required></label>
+        <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••••"></label>
       <button class="btn btn-primary" type="submit">Se connecter</button>
     </form>
   </main>
-  <div id="toasts" class="toasts" aria-live="polite"></div>
   <script>window.__flash = <?= json_encode($error ? [['message' => $error, 'type' => 'error']] : [], JSON_UNESCAPED_UNICODE) ?>;</script>
-  <script src="<?= e(asset('app.js')) ?>"></script>
+  <script src="<?= e(asset('vendor/sweetalert2.all.min.js')) ?>"></script>
+  <script src="<?= e(asset('admin-ui.js')) ?>"></script>
 </body>
 </html>
