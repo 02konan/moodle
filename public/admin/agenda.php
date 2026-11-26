@@ -93,6 +93,19 @@ require __DIR__ . '/../../includes/header.php';
   </section>
 
   <section class="panel reveal">
+    <h2>Exporter l'agenda</h2>
+    <form class="filters agenda-export" data-no-async onsubmit="return false">
+      <input type="hidden" name="cohort" value="<?= e($cohort) ?>">
+      <input type="hidden" name="course" value="<?= e($course) ?>">
+      <label class="field"><span>Du</span><input type="date" name="from" value="<?= e($month->format('Y-m-d')) ?>" required></label>
+      <label class="field"><span>Au</span><input type="date" name="to" value="<?= e($next->modify('-1 day')->format('Y-m-d')) ?>" required></label>
+      <button class="btn btn-primary" type="button" data-agenda-export="general"><span class="btn-label">Agenda général (PDF)</span></button>
+      <button class="btn" type="button" data-agenda-export="cohort"><span class="btn-label">Agenda par cohorte (un PDF par cohorte)</span></button>
+    </form>
+    <p class="muted small">Format paysage, regroupé par jour. <?= $filters ? 'Les filtres ci-dessus (' . e(implode(', ', $filters)) . ') sont appliqués.' : 'Toutes les cohortes et tous les cours ; utilisez les filtres ci-dessus pour restreindre.' ?></p>
+  </section>
+
+  <section class="panel reveal">
     <h2>Prochaines programmations <span class="muted small">(en cours ou dans les 60 jours)</span></h2>
     <div class="table-wrap">
       <table>
