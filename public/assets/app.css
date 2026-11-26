@@ -601,3 +601,30 @@ tbody tr.plan-delete td:not(:last-child):not(:nth-last-child(2)) { opacity: .75;
 .plan-card-stats .plan-card-quiz { background: var(--accent); color: var(--accent-ink); }
 .plan-card-actions { display: flex; align-items: center; gap: 6px; margin-top: auto; }
 .plan-card-actions form { margin: 0; }
+
+/* ===== Agenda ===== */
+.tag-upcoming { background: #e8eefc; color: #1d3f8f; }
+.tag-open { background: #1f7a3f; color: #fff; }
+.tag-closed { background: var(--soft-2); color: var(--muted); }
+.plan-agenda { padding: .3rem .6rem; font-size: .75rem; }
+.plan-agenda.has-dates { box-shadow: 0 0 0 1px #1f7a3f; }
+.plan-agenda-n { background: #1f7a3f; color: #fff; border-radius: 99px; padding: 0 .4rem; font-size: .68rem; }
+.cohort-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; padding: 6px 0; }
+.field > span .link { background: none; border: 0; cursor: pointer; padding: 0; margin-left: 6px; font: inherit; }
+.cal-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cal-head h2 { min-width: 160px; text-align: center; }
+.cal-legend { display: inline-flex; gap: 6px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--soft-2); border-radius: 10px; overflow: hidden; background: var(--soft-2); gap: 1px; }
+.cal-dow { background: var(--soft); text-align: center; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 6px 0; }
+.cal-day { background: var(--white); min-height: 92px; padding: 4px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cal-day.is-out { background: #fafaf9; }
+.cal-day.is-out .cal-num { opacity: .4; }
+.cal-day.is-today { box-shadow: inset 0 0 0 2px var(--accent); }
+.cal-num { font-size: .75rem; font-weight: 700; }
+.cal-day.is-today .cal-num { color: var(--accent); }
+.cal-ev { display: block; font-size: .68rem; line-height: 1.25; padding: 2px 4px; border-radius: 5px; text-decoration: none; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-ev small { display: block; color: var(--muted); font-size: .62rem; }
+.ev-open { background: #e5f4ea; box-shadow: inset 2px 0 0 #1f7a3f; }
+.ev-close { background: #fde8e8; box-shadow: inset 2px 0 0 #b00020; }
+a.cal-ev:hover { filter: brightness(.95); }
+@media (max-width: 700px) { .cal-day { min-height: 64px; } .cal-ev small { display: none; } }

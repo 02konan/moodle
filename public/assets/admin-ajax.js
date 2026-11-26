@@ -152,6 +152,15 @@
     if (e.target.matches('[data-submit-on-change]')) e.target.form?.requestSubmit();
   });
 
+  // « Tout cocher » : <button data-check-all="nom[]"> coche / décoche les cases de ce nom dans son formulaire
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-check-all]');
+    if (!btn) return;
+    const boxes = [...(btn.closest('form') || document).querySelectorAll(`input[type=checkbox][name="${CSS.escape(btn.dataset.checkAll)}"]`)];
+    const all = boxes.every((b) => b.checked);
+    boxes.forEach((b) => { b.checked = !all; });
+  });
+
   window.addEventListener('popstate', () => visit(location.href, { history: 'none' }));
 
   window.appVisit = visit;

@@ -46,6 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $tree = plan_tree($pdo, $id);
+// Nombre de cohortes programmées par QCM (bouton « Agenda »)
+$st = $pdo->prepare('SELECT s.item_id, COUNT(*) n FROM quiz_schedules s JOIN course_plan_items i ON i.id = s.item_id WHERE i.plan_id = ? GROUP BY s.item_id');
+$st->execute([$id]);
+$agendaCounts = array_map('intval', array_column($st->fetchAll(), 'n', 'item_id'));
 $nQuiz = 0;
 
 /* ---------- Composants ---------- */
@@ -53,7 +57,7 @@ $hidden = fn(array $f) => implode('', array_map(fn($k, $v) => '<input type="hidd
 $base = ['csrf' => csrf_token(), 'id' => $id];
 
 /** Ligne d'un élément : numéro, titre modifiable, monter / descendre / supprimer. */
-$row = function (array $it, string $label, bool $first, bool $last) use ($hidden, $base): string {
+$row = function (array $it, string $label, bool $first, bool $last) use ($hidden, $base, $agendaCounts): string {
     $id = (int)$it['id'];
     $what = PLAN_ITEM_TYPES[$it['type']];
     $deleteMsg = $it['type'] === 'quiz' ? "Supprimer ce QCM ?" : "Supprimer cette " . mb_strtolower($what) . " et tout son contenu ?";
@@ -67,6 +71,10 @@ $row = function (array $it, string $label, bool $first, bool $last) use ($hidden
         . '<input type="text" name="title" value="' . e($it['title']) . '" maxlength="255" required aria-label="Titre : ' . e($what) . '">'
         . '<button class="icon-btn" type="submit" title="Enregistrer le titre" aria-label="Enregistrer le titre">✓</button></form>'
         . '<span class="plan-tools">'
+        . ($it['type'] === 'quiz'
+            ? '<a class="btn plan-agenda' . (!empty($agendaCounts[$id]) ? ' has-dates' : '') . '" href="./quiz-agenda.php?plan=' . (int)$base['id'] . '&amp;item=' . $id . '" title="Programmer ce QCM par cohorte">Agenda'
+              . (!empty($agendaCounts[$id]) ? ' <span class="plan-agenda-n">' . $agendaCounts[$id] . '</span>' : '') . '</a>'
+            : '')
         . $btn('move', '↑', 'Monter', ['dir' => -1], $first)
         . $btn('move', '↓', 'Descendre', ['dir' => 1], $last)
         . $btn('delete', '✕', 'Supprimer', [], false, $deleteMsg)
@@ -91,7 +99,10 @@ require __DIR__ . '/../../includes/header.php';
       <p class="muted small"><a class="link" href="./programmes.php">← Tous les cours</a></p>
       <h1><?= e($plan['title']) ?></h1>
     </div>
-    <a class="btn btn-primary" href="./programme-word.php?id=<?= $id ?>" data-no-async>Télécharger la fiche Word</a>
+    <span class="export">
+      <button class="btn" type="button" data-agenda-pdf="<?= $id ?>"><span class="btn-label">Agenda PDF</span></button>
+      <a class="btn btn-primary" href="./programme-word.php?id=<?= $id ?>" data-no-async>Télécharger la fiche Word</a>
+    </span>
   </header>
 
   <section class="panel reveal">

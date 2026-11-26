@@ -105,6 +105,76 @@
     finally { btn.disabled = false; btn.classList.remove('is-loading'); }
   }
 
+  /* ---------- Agenda d'un cours en PDF paysage ---------- */
+  function buildAgendaPdf(data, logo) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const M = 12, PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight();
+
+    const header = () => {
+      let x = M;
+      if (logo) { doc.addImage(logo, 'PNG', M, 8, 18, 18); x = M + 22; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...G.ink);
+      doc.text('Agenda des QCM', x, 14);
+      doc.setFontSize(10); doc.text(data.plan, x, 20);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...G.soft);
+      doc.text(`Généré le ${data.generated}`, PW - M, 14, { align: 'right' });
+      doc.setDrawColor(...G.accent); doc.setLineWidth(0.6); doc.line(M, 29, PW - M, 29);
+    };
+
+    // Une ligne par cohorte programmée ; QCM, section et sous-section fusionnés sur ses lignes
+    const body = [];
+    data.quizzes.forEach((q) => {
+      const n = Math.max(q.schedules.length, 1);
+      const first = [
+        { content: q.section, rowSpan: n }, { content: q.subsection || '—', rowSpan: n },
+        { content: q.quiz, rowSpan: n, styles: { fontStyle: 'bold' } },
+      ];
+      if (!q.schedules.length) {
+        body.push([...first, { content: 'Non programmé', colSpan: 4, styles: { fontStyle: 'italic', textColor: G.soft } }]);
+        return;
+      }
+      q.schedules.forEach((s, i) => body.push([...(i === 0 ? first : []), s.cohort, s.opens, s.closes, s.status]));
+    });
+    if (!body.length) body.push([{ content: 'Ce cours ne contient encore aucun QCM.', colSpan: 7, styles: { halign: 'center', fontStyle: 'italic', textColor: G.soft } }]);
+
+    doc.autoTable({
+      startY: 34,
+      margin: { top: 34, left: M, right: M, bottom: 14 },
+      head: [['Section', 'Sous-section', 'QCM', 'Cohorte', 'Ouverture', 'Fermeture', 'État']],
+      body,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2, textColor: G.text, lineColor: G.line, lineWidth: 0.15, valign: 'middle' },
+      headStyles: { fillColor: G.headBg, textColor: G.headInk, fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 44 }, 1: { cellWidth: 40 }, 2: { cellWidth: 62 }, 3: { cellWidth: 42 }, 4: { cellWidth: 29 }, 5: { cellWidth: 29 }, 6: { cellWidth: 'auto' } },
+      rowPageBreak: 'avoid',
+      didDrawPage: header,
+    });
+
+    const n = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= n; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...G.soft);
+      doc.text(`${data.plan}  —  Page ${i} / ${n}`, PW - M, PH - 6, { align: 'right' });
+    }
+    return doc;
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-agenda-pdf]');
+    if (!btn) return;
+    e.preventDefault();
+    busy(btn, async () => {
+      await ready(false);
+      const res = await fetch('./agenda-data.php?plan=' + encodeURIComponent(btn.dataset.agendaPdf), { headers: { Accept: 'application/json' } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+      const logo = await loadLogo();
+      const slug = data.plan.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 80);
+      buildAgendaPdf(data, logo).save(`agenda-${slug || 'cours'}-${stamp()}.pdf`);
+    });
+  });
+
   /* ---------- Export d'une cohorte ---------- */
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-pdf-cohort]');

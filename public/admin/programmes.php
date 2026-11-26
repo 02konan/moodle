@@ -90,6 +90,7 @@ require __DIR__ . '/../../includes/header.php';
           <div class="plan-card-actions">
             <a class="btn" href="./programme.php?id=<?= (int)$p['id'] ?>">Ouvrir</a>
             <a class="btn btn-primary" href="./programme-word.php?id=<?= (int)$p['id'] ?>" data-no-async>Fiche Word</a>
+            <button class="btn" type="button" data-agenda-pdf="<?= (int)$p['id'] ?>" title="Agenda du cours en PDF (paysage)"><span class="btn-label">Agenda</span></button>
             <span class="bulk-spacer"></span>
             <form method="post" action="./programmes.php">
               <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
