@@ -121,3 +121,45 @@ function plan_counts(PDO $pdo): array
     }
     return $out;
 }
+
+/**
+ * Duplique un cours : nouvelle structure identique (sections, sous-sections, QCM, ordre),
+ * titre « … (copie) » (ou « (copie 2) »…). L'agenda n'est pas copié (il dépend des cohortes).
+ * Retourne l'identifiant du nouveau cours.
+ */
+function plan_duplicate(PDO $pdo, int $planId): int
+{
+    $plan = plan_get($pdo, $planId);
+    if (!$plan) throw new RuntimeException('Cours introuvable.');
+
+    // « X (copie) » ou « X (copie 3) » redonne « X (copie N) » plutôt que « X (copie) (copie) »
+    $original = preg_replace('/ \(copie(?: \d+)?\)$/u', '', $plan['title']) ?? $plan['title'];
+    $base = mb_substr($original, 0, 240) . ' (copie';
+    $st = $pdo->prepare('SELECT title FROM course_plans WHERE title LIKE ?');
+    $st->execute([str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $base) . '%']);
+    $taken = array_flip($st->fetchAll(PDO::FETCH_COLUMN));
+    $title = $base . ')';
+    for ($n = 2; isset($taken[$title]); $n++) $title = $base . " $n)";
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('INSERT INTO course_plans (title) VALUES (?)')->execute([$title]);
+        $newId = (int)$pdo->lastInsertId();
+        // Parents avant enfants : sections, puis sous-sections, puis QCM
+        $st = $pdo->prepare("SELECT * FROM course_plan_items WHERE plan_id = ?
+                             ORDER BY FIELD(type, 'section', 'subsection', 'quiz'), position, id");
+        $st->execute([$planId]);
+        $ins = $pdo->prepare('INSERT INTO course_plan_items (plan_id, parent_id, type, title, position) VALUES (?, ?, ?, ?, ?)');
+        $map = [];
+        foreach ($st->fetchAll() as $it) {
+            $parent = $it['parent_id'] !== null ? ($map[(int)$it['parent_id']] ?? null) : null;
+            $ins->execute([$newId, $parent, $it['type'], $it['title'], (int)$it['position']]);
+            $map[(int)$it['id']] = (int)$pdo->lastInsertId();
+        }
+        $pdo->commit();
+        return $newId;
+    } catch (Throwable $ex) {
+        $pdo->rollBack();
+        throw $ex;
+    }
+}

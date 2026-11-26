@@ -16,6 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $itemId = (int)($_POST['item_id'] ?? 0);
     try {
         switch ($_POST['action'] ?? '') {
+            case 'duplicate':
+                $newId = plan_duplicate($pdo, $id);
+                flash('Cours dupliqué : vous êtes sur la copie, renommez-la si besoin.', 'success');
+                redirect('./programme.php?id=' . $newId);
             case 'rename_plan':
                 $pdo->prepare('UPDATE course_plans SET title = ? WHERE id = ?')->execute([plan_title((string)($_POST['title'] ?? '')), $id]);
                 flash('Titre du cours enregistré.', 'success');
@@ -102,6 +106,10 @@ require __DIR__ . '/../../includes/header.php';
     </div>
     <span class="export">
       <button class="btn" type="button" data-agenda-pdf="<?= $id ?>"><span class="btn-label">Agenda PDF</span></button>
+      <form method="post" action="./programme.php">
+        <?= $hidden($base + ['action' => 'duplicate']) ?>
+        <button class="btn" type="submit"><?= ui_icon('copy') ?>Dupliquer</button>
+      </form>
       <a class="btn btn-primary" href="./programme-word.php?id=<?= $id ?>" data-no-async>Télécharger la fiche Word</a>
     </span>
   </header>
