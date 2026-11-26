@@ -4,7 +4,7 @@
  *
  * Variables attendues avant l'inclusion :
  *   $pageTitle  string  titre de l'onglet
- *   $active     string  entrée active de la sidebar : students | cohorts | subjects | courses | duplicates
+ *   $active     string  entrée active de la sidebar : students | cohorts | subjects | courses | plans | duplicates
  *
  * Seul le contenu de <main id="app"> est remplacé lors des navigations asynchrones (assets/admin-ajax.js).
  */
@@ -18,6 +18,7 @@ $sideLinks = [
     'cohorts'  => ['./cohorts.php',         'Cohortes',             '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 14.5c3 0 6 1.8 6 5.5"/>'],
     'subjects' => ['./cohort-subjects.php', 'Matières par cohorte', '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M8 7h7"/>'],
     'courses'  => ['./courses.php',         'Noms des cours',       '<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'],
+    'plans'    => ['./programmes.php',      'Cours',                '<path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/>'],
     'duplicates' => ['./duplicates.php',    'Doublons',             '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'],
 ];
 $flashData = json_encode(flash_pull(), JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_AMP);

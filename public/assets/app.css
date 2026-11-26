@@ -566,3 +566,23 @@ tbody tr.plan-delete td:not(:last-child):not(:nth-last-child(2)) { opacity: .75;
 .sync-item.is-ko { box-shadow: inset 3px 0 0 #b00020, 0 0 0 1px var(--soft-2); }
 .sync-err { color: #b00020; }
 .sync-warn { color: #8a4b00; }
+
+/* ===== Cours : éditeur de structure ===== */
+.plan-tree { gap: 8px; }
+.plan-section { border: 1px solid var(--soft-2); border-radius: 10px; padding: 6px 8px; display: grid; gap: 4px; background: var(--white); }
+.plan-sub { border-left: 3px solid var(--soft-2); padding-left: 8px; display: grid; gap: 4px; }
+.plan-children { display: grid; gap: 4px; padding-left: 22px; }
+.plan-row { display: flex; align-items: center; gap: 6px; }
+.plan-row .plan-rename { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.plan-row .plan-rename input { flex: 1; min-width: 0; }
+.plan-row form { margin: 0; }
+.plan-tools { display: inline-flex; gap: 4px; }
+.plan-tools .icon-btn[disabled] { opacity: .3; cursor: default; transform: none; }
+.plan-label { flex: none; min-width: 74px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.plan-section > .plan-row .plan-label { color: var(--ink); }
+.plan-section > .plan-row input { font-weight: 600; }
+.plan-quiz .plan-label { color: var(--accent); }
+.plan-add { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.plan-add input { flex: 1 1 220px; }
+.plan-add .btn { padding: .35rem .65rem; }
+.plan-add-section { padding-top: 6px; border-top: 1px dashed var(--soft-2); }
