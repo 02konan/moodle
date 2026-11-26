@@ -498,7 +498,8 @@ a.tag:hover { filter: brightness(.96); }
 .plan-card-stats .plan-card-quiz { background: var(--accent-soft); border-color: #fde3c9; color: var(--accent-700); }
 .plan-card-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; flex-wrap: wrap; }
 .plan-card-actions .btn { height: 34px; padding: 0 12px; font-size: .8rem; }
-.plan-card-actions form { margin: 0; margin-left: auto; }
+.plan-card-actions form { margin: 0; }
+.plan-card-actions { flex-wrap: nowrap; }
 
 .plan-tree { gap: 12px; }
 .plan-section { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px; display: grid; gap: 6px; background: var(--surface); }
@@ -748,3 +749,24 @@ tr.row-details:hover > td { background: var(--surface-2); }
 .detail-modal .details-grid { border: 0; border-radius: 0; padding: 20px 22px; animation: none; }
 .detail-modal .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; background: var(--surface-2); border-top: 1px solid var(--line); }
 .details-grid code { justify-self: start; }
+
+/* Barres de défilement fines, curseur gris clair */
+* { scrollbar-width: thin; scrollbar-color: #d4d4cf transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4d4cf; border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #b9b9b3; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Boutons à icône seule : icône toujours centrée, quel que soit le contexte (cellules d'actions, liens, formulaires) */
+.icon-btn, td.row-actions > .icon-btn, .bo-icon-btn, .bo-collapse {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; line-height: 0; text-align: center; flex: none;
+}
+.icon-btn > svg, .bo-icon-btn > svg, .bo-collapse > svg { display: block; margin: 0; }
+td.row-actions form { align-items: center; }
+
+/* Le bouton ☰ n'existe que sur tablette / mobile */
+.bo-burger { display: none !important; }
+@media (max-width: 1024px) { .bo-burger { display: inline-flex !important; } }
+.icon-btn.is-loading { opacity: .55; pointer-events: none; }

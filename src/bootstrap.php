@@ -68,6 +68,8 @@ function ui_icon(string $name): string
         'up'     => '<path d="m6 15 6-6 6 6"/>',
         'down'   => '<path d="m6 9 6 6 6-6"/>',
         'x'      => '<path d="M18 6 6 18M6 6l12 12"/>',
+        'calendar' => '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+        'copy'   => '<rect x="8" y="8" width="13" height="13" rx="2.5"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8"/>',
         'eye'    => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
         'layers' => '<path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/>',
     ];
