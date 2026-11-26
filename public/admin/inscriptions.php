@@ -145,7 +145,7 @@ require __DIR__ . '/../../includes/header.php';
         <?php foreach ($rows as $r):
           $courses = moodle_courses_for($r['cohort'], $r['section_code'], $subjects, $overrides);
           $det = 'det-' . (int)$r['id']; ?>
-          <tr class="row-main" data-expand="<?= $det ?>" title="Cliquer pour afficher le détail">
+          <tr class="row-main" data-modal="<?= $det ?>" data-modal-title="<?= e($r['lastname'] . ' ' . $r['firstname']) ?>" title="Cliquer pour afficher la fiche">
             <td class="col-check"><input type="checkbox" class="row-check" name="ids[]" value="<?= (int)$r['id'] ?>" form="bulk-form" aria-label="Sélectionner <?= e($r['lastname']) ?>"></td>
             <td><code><?= e($r['username']) ?></code></td>
             <td><strong><?= e($r['lastname']) ?></strong> <?= e($r['firstname']) ?></td>
@@ -160,18 +160,17 @@ require __DIR__ . '/../../includes/header.php';
             </td>
             <td><?= $r['exported_at'] ? '<span class="tag tag-done">Exporté</span>' : '<span class="tag tag-new">Nouveau</span>' ?></td>
             <td class="row-actions">
-              <button class="icon-btn row-toggle" type="button" data-row-toggle aria-expanded="false" aria-controls="<?= $det ?>" title="Détails" aria-label="Afficher le détail"><?= ui_icon('down') ?></button>
+              <button class="icon-btn" type="button" data-open-modal title="Voir la fiche" aria-label="Voir la fiche de <?= e($r['lastname'] . ' ' . $r['firstname']) ?>"><?= ui_icon('eye') ?></button>
               <a class="icon-btn" href="./edit.php?<?= e(http_build_query(['id' => (int)$r['id'], 'back' => $query()])) ?>" title="Modifier" aria-label="Modifier"><?= ui_icon('pencil') ?></a>
               <form method="post" action="./delete.php">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="back" value="<?= e($query()) ?>">
-                <button class="icon-btn" title="Supprimer" aria-label="Supprimer" data-confirm="Supprimer l'inscription de <?= e($r['lastname'] . ' ' . $r['firstname']) ?> ?" data-confirm-danger><?= ui_icon('trash') ?></button>
+                <button class="icon-btn" title="Supprimer" aria-label="Supprimer" data-confirm-title="Supprimer <?= e($r['lastname'] . ' ' . $r['firstname']) ?> ?" data-confirm="Cette action est irréversible." data-confirm-danger><?= ui_icon('trash') ?></button>
               </form>
             </td>
           </tr>
-          <tr class="row-details" id="<?= $det ?>" hidden>
-            <td colspan="8">
+          <template id="<?= $det ?>">
               <div class="details-grid">
                 <div><span>Nom complet</span><strong><?= e($r['lastname'] . ' ' . $r['firstname']) ?></strong></div>
                 <div><span>Nom d'utilisateur</span><code><?= e($r['username']) ?></code></div>
@@ -189,8 +188,10 @@ require __DIR__ . '/../../includes/header.php';
                   <?php endif; ?>
                 </div>
               </div>
-            </td>
-          </tr>
+              <div class="modal-actions">
+                <a class="btn btn-primary" href="./edit.php?<?= e(http_build_query(['id' => (int)$r['id'], 'back' => $query()])) ?>"><?= ui_icon('pencil') ?>Modifier</a>
+              </div>
+          </template>
         <?php endforeach; ?>
         <?php if (!$rows): ?>
           <tr><td colspan="8" class="empty">Aucun étudiant pour ces critères.</td></tr>

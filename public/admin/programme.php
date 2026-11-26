@@ -60,11 +60,12 @@ $base = ['csrf' => csrf_token(), 'id' => $id];
 $row = function (array $it, string $label, bool $first, bool $last) use ($hidden, $base, $agendaCounts): string {
     $id = (int)$it['id'];
     $what = PLAN_ITEM_TYPES[$it['type']];
-    $deleteMsg = $it['type'] === 'quiz' ? "Supprimer ce QCM ?" : "Supprimer cette " . mb_strtolower($what) . " et tout son contenu ?";
+    $deleteTitle = $it['type'] === 'quiz' ? 'Supprimer ce QCM ?' : 'Supprimer cette ' . mb_strtolower($what) . ' ?';
+    $deleteMsg = $it['type'] === 'quiz' ? 'Ses programmations seront aussi supprimées.' : 'Tout son contenu sera supprimé.';
     $btn = fn(string $action, string $text, string $title, array $extra = [], bool $disabled = false, string $confirm = '') =>
         '<form method="post" action="./programme.php">' . $hidden($base + ['action' => $action, 'item_id' => $id] + $extra)
         . '<button class="icon-btn" type="submit" title="' . e($title) . '" aria-label="' . e($title) . '"' . ($disabled ? ' disabled' : '')
-        . ($confirm !== '' ? ' data-confirm="' . e($confirm) . '" data-confirm-danger' : '') . '>' . $text . '</button></form>';
+        . ($confirm !== '' ? ' data-confirm-title="' . e($deleteTitle) . '" data-confirm="' . e($confirm) . '" data-confirm-danger' : '') . '>' . $text . '</button></form>';
     return '<div class="plan-row plan-' . $it['type'] . '">'
         . '<span class="plan-label">' . e($label) . '</span>'
         . '<form method="post" action="./programme.php" class="plan-rename" data-key="rename-' . $id . '">' . $hidden($base + ['action' => 'rename', 'item_id' => $id])
