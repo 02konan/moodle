@@ -636,3 +636,7 @@ a.cal-ev:hover { filter: brightness(.95); }
 .ev-closed { background: #f1f1ef; box-shadow: inset 3px 0 0 #9a9a96; color: var(--muted); }
 .cal-legend .cal-ev { display: inline-block; }
 .sched-badge { display: inline-block; padding: .15rem .5rem; border-radius: 6px; font-size: .75rem; font-weight: 600; white-space: nowrap; }
+
+.agenda-export { align-items: flex-end; }
+.agenda-export .field { flex: 0 0 auto; }
+.agenda-export input[type=date] { width: auto; }
