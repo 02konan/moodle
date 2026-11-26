@@ -640,3 +640,11 @@ a.cal-ev:hover { filter: brightness(.95); }
 .agenda-export { align-items: flex-end; }
 .agenda-export .field { flex: 0 0 auto; }
 .agenda-export input[type=date] { width: auto; }
+
+/* Agenda d'un QCM : appliquer à d'autres QCM */
+.also-quizzes { border: 1px solid var(--soft-2); border-radius: 10px; padding: 6px 10px; display: grid; gap: 3px; }
+.also-quizzes summary { cursor: pointer; font-weight: 600; font-size: .85rem; }
+.also-quizzes[open] summary { margin-bottom: 4px; }
+.also-group { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-top: 6px; }
+.also-quizzes .check { padding-left: 8px; }
+.also-quizzes button.link { background: none; border: 0; cursor: pointer; padding: 0; font: inherit; }

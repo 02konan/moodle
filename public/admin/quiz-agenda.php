@@ -21,10 +21,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($_POST['action'] ?? '') {
             case 'add':
                 $cohorts = array_merge((array)($_POST['cohorts'] ?? []), [(string)($_POST['other'] ?? '')]);
-                [$added, $updated] = schedule_quiz($pdo, $planId, $itemId, $cohorts,
-                    parse_local_datetime((string)($_POST['opens_at'] ?? ''), 'Ouverture'),
-                    parse_local_datetime((string)($_POST['closes_at'] ?? ''), 'Fermeture'));
-                flash("$added cohorte(s) programmée(s)" . ($updated ? ", $updated mise(s) à jour" : '') . '.', 'success');
+                $opens = parse_local_datetime((string)($_POST['opens_at'] ?? ''), 'Ouverture');
+                $closes = parse_local_datetime((string)($_POST['closes_at'] ?? ''), 'Fermeture');
+                // Ce QCM + les autres QCM cochés : mêmes cohortes, même intervalle, en une seule fois
+                $items = array_values(array_unique(array_merge([$itemId], array_map('intval', (array)($_POST['also'] ?? [])))));
+                $pdo->beginTransaction();
+                try {
+                    $added = $updated = 0;
+                    foreach ($items as $it) {
+                        [$a, $u] = schedule_quiz($pdo, $planId, $it, $cohorts, $opens, $closes);
+                        $added += $a; $updated += $u;
+                    }
+                    $pdo->commit();
+                } catch (Throwable $ex) {
+                    $pdo->rollBack();   // rien n'est enregistré si un QCM pose problème
+                    throw $ex;
+                }
+                $n = count($items);
+                flash("$added programmation(s) ajoutée(s)" . ($updated ? ", $updated mise(s) à jour" : '')
+                    . ($n > 1 ? " sur $n QCM." : '.'), 'success');
                 break;
             case 'update':
                 $s = plan_schedule($pdo, $planId, (int)($_POST['schedule'] ?? 0));
@@ -59,7 +74,10 @@ $fmt = fn(string $dt) => date('d/m/Y H:i', strtotime($dt));
 
 // Emplacement du QCM dans le cours (section › sous-section)
 $path = [];
-foreach (plan_quizzes(plan_tree($pdo, $planId)) as $q) if ($q['id'] === $itemId) $path = array_filter([$q['section'], $q['subsection']]);
+$allQuizzes = plan_quizzes(plan_tree($pdo, $planId));
+foreach ($allQuizzes as $q) if ($q['id'] === $itemId) $path = array_filter([$q['section'], $q['subsection']]);
+$otherQuizzes = array_values(array_filter($allQuizzes, fn($q) => $q['id'] !== $itemId));
+$scheduleCounts = array_map('count', plan_schedules($pdo, $planId));
 
 $pageTitle = 'Agenda — ' . $quiz['title'];
 $active = 'agenda';
@@ -132,6 +150,18 @@ require __DIR__ . '/../../includes/header.php';
         <input name="other" list="agenda-cohorts" autocomplete="off" placeholder="Tapez ou choisissez une cohorte">
         <datalist id="agenda-cohorts"><?php foreach (($filiere ? $others : array_merge($filiere, $others)) as $c): ?><option value="<?= e($c) ?>"></option><?php endforeach; ?></datalist>
       </label>
+
+      <?php if ($otherQuizzes): ?>
+        <details class="also-quizzes">
+          <summary>Appliquer aussi à d'autres QCM du cours <span class="muted small">(mêmes cohortes, même ouverture et fermeture)</span></summary>
+          <p class="small"><button class="link small" type="button" data-check-all="also[]">tout cocher</button></p>
+          <?php $group = null; foreach ($otherQuizzes as $q): $g = implode(' › ', array_filter([$q['section'], $q['subsection']])); ?>
+            <?php if ($g !== $group): $group = $g; ?><p class="also-group"><?= e($g) ?></p><?php endif; ?>
+            <label class="check"><input type="checkbox" name="also[]" value="<?= $q['id'] ?>">
+              <?= e($q['title']) ?><?= !empty($scheduleCounts[$q['id']]) ? ' <span class="tag tag-done">' . $scheduleCounts[$q['id']] . ' cohorte(s) programmée(s)</span>' : '' ?></label>
+          <?php endforeach; ?>
+        </details>
+      <?php endif; ?>
 
       <div class="grid-2">
         <label class="field"><span>Ouverture</span><input type="datetime-local" name="opens_at" required></label>
