@@ -70,6 +70,17 @@ function asset(string $path, string $prefix = '../assets/'): string
     return $prefix . $path . (is_file($file) ? '?v=' . filemtime($file) : '');
 }
 
+/**
+ * Version des fichiers JS / CSS du backoffice (date de modification la plus récente). Après un déploiement,
+ * la navigation asynchrone la compare à celle de la page ouverte et recharge entièrement si elle a changé.
+ */
+function assets_version(): string
+{
+    $max = 0;
+    foreach (glob(ROOT . '/public/assets/*.{js,css}', GLOB_BRACE) ?: [] as $f) $max = max($max, (int)filemtime($f));
+    return (string)$max;
+}
+
 /** Icône SVG du backoffice (trait, hérite de la couleur du texte) : trash, pencil, check, up, down, x, layers. */
 function ui_icon(string $name): string
 {

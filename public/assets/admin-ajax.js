@@ -28,7 +28,11 @@
 
   /* ---------- Requête + remplacement du contenu ---------- */
   // soft : recherche en direct (curseur conservé) ; stay : retour sur la même page après une action (défilement conservé)
+  const bootVersion = app()?.dataset.version || '';   // version des scripts chargés avec cet onglet
+  let outdated = false;
+
   async function visit(url, { method = 'GET', body = null, history: hist = 'push', soft = false, stay = false } = {}) {
+    if (outdated && method === 'GET') { window.location.href = url; return; }
     controller?.abort();
     controller = new AbortController();
     document.body.classList.add('is-loading');
@@ -55,6 +59,12 @@
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const next = doc.getElementById('app');
       if (!next) { window.location.href = res.url || url; return; }   // page hors backoffice (connexion…)
+      // Nouvelle version déployée depuis l'ouverture de l'onglet : les scripts en mémoire sont périmés,
+      // on recharge entièrement (GET) ; après un envoi de formulaire, au prochain changement de page.
+      if (next.dataset.version && next.dataset.version !== bootVersion) {
+        if (method === 'GET') { window.location.href = res.url || url; return; }
+        outdated = true;
+      }
 
       swap(next, doc.title, { soft, stay });
       if (hist === 'push') window.history.pushState({ async: true }, '', res.url || url);

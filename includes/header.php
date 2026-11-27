@@ -101,4 +101,4 @@ $flashData = json_encode(flash_pull(), JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | 
       </div>
     </header>
 
-    <main class="bo-main admin" id="app" data-active="<?= e($active) ?>" data-flash='<?= $flashData ?>'>
+    <main class="bo-main admin" id="app" data-version="<?= e(assets_version()) ?>" data-active="<?= e($active) ?>" data-flash='<?= $flashData ?>'>
