@@ -34,7 +34,7 @@ require __DIR__ . '/../../includes/header.php';
   <header class="reveal page-head">
     <div>
       <h1>Cohortes</h1>
-      <p class="muted">Liste des étudiants par cohorte, exportable en PDF (nom complet, nom d'utilisateur, mot de passe).</p>
+      <p class="muted">Liste des étudiants par cohorte, exportable en PDF (nom complet, nom d'utilisateur, mot de passe) : seuls les étudiants déjà exportés vers Moodle figurent dans les listes.</p>
     </div>
   </header>
 
