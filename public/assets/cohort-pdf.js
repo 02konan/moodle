@@ -286,7 +286,7 @@
     busy(btn, async () => {
       await ready(false);
       const [data, logo] = await Promise.all([fetchCohorts([btn.dataset.pdfCohort]), loadLogo()]);
-      if (!data.cohorts.length) throw new Error('Cette cohorte ne contient aucun étudiant.');
+      if (!data.cohorts.length) throw new Error('Aucun étudiant déjà exporté dans cette cohorte.');
       buildPdf(data.cohorts[0], data.generated, logo).save(fileName(data.cohorts[0].cohort, stamp()));
     });
   });
@@ -320,7 +320,7 @@
     busy(bulkBtn, async () => {
       await ready(names.length > 1);
       const [data, logo] = await Promise.all([fetchCohorts(names), loadLogo()]);
-      if (!data.cohorts.length) throw new Error('Aucun étudiant dans les cohortes sélectionnées.');
+      if (!data.cohorts.length) throw new Error('Aucun étudiant déjà exporté dans les cohortes sélectionnées.');
       if (data.cohorts.length === 1) {
         buildPdf(data.cohorts[0], data.generated, logo).save(fileName(data.cohorts[0].cohort, stamp()));
         return;

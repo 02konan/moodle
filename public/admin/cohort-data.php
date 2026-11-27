@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
-// Données des listes PDF : étudiants des cohortes demandées (cohorts[]=...), réservé à l'admin.
+// Données des listes PDF : étudiants DÉJÀ EXPORTÉS vers Moodle des cohortes demandées (cohorts[]=...), réservé à l'admin.
+// Les non exportés sont exclus : leur compte n'existe pas encore dans Moodle.
 require __DIR__ . '/../../src/bootstrap.php';
 
 if (empty($_SESSION['admin_id'])) json_out(['error' => 'Session expirée, reconnectez-vous.'], 401);
@@ -16,7 +17,7 @@ if (count($cohorts) > 200) json_out(['error' => 'Trop de cohortes (200 maximum p
 $in = implode(',', array_fill(0, count($cohorts), '?'));
 $st = db()->prepare(
     "SELECT cohort, lastname, firstname, username, password, section_label, class_label
-     FROM students WHERE cohort IN ($in) ORDER BY cohort, lastname, firstname"
+     FROM students WHERE cohort IN ($in) AND exported_at IS NOT NULL ORDER BY cohort, lastname, firstname"
 );
 $st->execute($cohorts);
 
