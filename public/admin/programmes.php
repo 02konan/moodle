@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         switch ($_POST['action'] ?? '') {
             case 'create':
-                $pdo->prepare('INSERT INTO course_plans (title) VALUES (?)')->execute([plan_title((string)($_POST['title'] ?? ''))]);
+                $pdo->prepare('INSERT INTO course_plans (title, created_at, updated_at) VALUES (?, ?, ?)')->execute([plan_title((string)($_POST['title'] ?? '')), now_sql(), now_sql()]);
                 $id = (int)$pdo->lastInsertId();
                 flash('Cours créé : ajoutez maintenant ses sections.', 'success');
                 redirect('./programme.php?id=' . $id);

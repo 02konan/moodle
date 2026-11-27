@@ -96,7 +96,7 @@ function moodle_sync_cohort(PDO $pdo, MoodleApi $api, string $cohort): array
     $synced = [];
     foreach ($ids as $username => $id) $synced[] = (int)$byUsername[$username]['id'];
     $in = implode(',', array_fill(0, count($synced), '?'));
-    $pdo->prepare("UPDATE students SET exported_at = NOW() WHERE exported_at IS NULL AND id IN ($in)")->execute($synced);
+    $pdo->prepare("UPDATE students SET exported_at = ? WHERE exported_at IS NULL AND id IN ($in)")->execute([now_sql(), ...$synced]);
 
     return $report;
 }

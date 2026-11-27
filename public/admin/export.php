@@ -73,6 +73,6 @@ echo "\xEF\xBB\xBF" . $content;
 if (!empty($_POST['mark'])) {
     $ids = array_column($rows, 'id');
     $in = implode(',', array_fill(0, count($ids), '?'));
-    $pdo->prepare("UPDATE students SET exported_at = NOW() WHERE id IN ($in) AND exported_at IS NULL")
-        ->execute($ids);
+    $pdo->prepare("UPDATE students SET exported_at = ? WHERE id IN ($in) AND exported_at IS NULL")
+        ->execute([now_sql(), ...$ids]);
 }

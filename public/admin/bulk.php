@@ -66,7 +66,7 @@ if ($filled === 4) {
 // Statut d'export
 switch ((string)($_POST['export_status'] ?? 'keep')) {
     case 'new':      $data['exported_at'] = null; break;
-    case 'exported': $data['exported_at'] = date('Y-m-d H:i:s'); break;
+    case 'exported': $data['exported_at'] = now_sql(); break;
 }
 
 $regen = !empty($_POST['regen_password']);

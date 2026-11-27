@@ -51,8 +51,10 @@ $sections = $pdo->query('SELECT section_label, COUNT(*) n FROM students GROUP BY
 $sectionMax = max(1, ...array_map('intval', array_column($sections, 'n') ?: [1]));
 $recent = $pdo->query('SELECT id, username, lastname, firstname, cohort, created_at, exported_at FROM students ORDER BY created_at DESC, id DESC LIMIT 6')->fetchAll();
 $upcoming = array_slice(agenda_schedules($pdo, date('Y-m-d H:i:s'), date('Y-m-d H:i:s', strtotime('+30 days'))), 0, 5);
-$quizStats = $pdo->query("SELECT (SELECT COUNT(*) FROM course_plans) plans, (SELECT COUNT(*) FROM course_plan_items WHERE type = 'quiz') quizzes,
-                                 (SELECT COUNT(*) FROM quiz_schedules WHERE closes_at >= NOW()) active")->fetch();
+$st = $pdo->prepare("SELECT (SELECT COUNT(*) FROM course_plans) plans, (SELECT COUNT(*) FROM course_plan_items WHERE type = 'quiz') quizzes,
+                                 (SELECT COUNT(*) FROM quiz_schedules WHERE closes_at >= ?) active");
+$st->execute([now_sql()]);
+$quizStats = $st->fetch();
 
 /* ---------- Salutation ---------- */
 $email = (string)($_SESSION['admin_email'] ?? '');

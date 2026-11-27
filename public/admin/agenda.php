@@ -32,6 +32,8 @@ $quizUrl = fn(array $s) => './quiz-agenda.php?plan=' . (int)$s['plan_id'] . '&it
 
 $months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 $days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+$weekdays = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+$monthStartDay = $month->format('Y-m-d');
 $start = $month->modify('-' . ((int)$month->format('N') - 1) . ' days');          // lundi de la 1re semaine
 $end = $next->modify('-1 day');
 $end = $end->modify('+' . (7 - (int)$end->format('N')) . ' days');               // dimanche de la dernière semaine
@@ -69,24 +71,43 @@ require __DIR__ . '/../../includes/header.php';
       <h2><?= ucfirst($months[(int)$month->format('n') - 1]) ?> <?= $month->format('Y') ?></h2>
       <a class="btn" href="<?= e($url(['m' => $next->format('Y-m')])) ?>" aria-label="Mois suivant">→</a>
       <span class="bulk-spacer"></span>
-      <span class="cal-legend"><?php foreach (SCHEDULE_STATUS as $k => $l): ?><span class="cal-ev ev-<?= $k ?>"><?= $l ?></span><?php endforeach; ?></span>
+      <span class="cal-legend"><?php foreach (SCHEDULE_STATUS as $k => $l): ?><span class="cal-legend-item"><i class="dot-<?= $k ?>"></i><?= $l ?></span><?php endforeach; ?></span>
       <a class="btn" href="<?= e($url()) ?>">Aujourd'hui</a>
     </div>
 
     <div class="cal-grid" role="grid">
       <?php foreach ($days as $d): ?><div class="cal-dow"><?= $d ?></div><?php endforeach; ?>
       <?php for ($day = $start; $day <= $end; $day = $day->modify('+1 day')): $key = $day->format('Y-m-d'); ?>
-        <div class="cal-day<?= $day->format('m') !== $month->format('m') ? ' is-out' : '' ?><?= $key === $today ? ' is-today' : '' ?>">
-          <span class="cal-num"><?= $day->format('j') ?></span>
-          <?php foreach ($byDay[$key] ?? [] as $sc): $stt = schedule_status($sc); ?>
-            <a class="cal-ev ev-<?= $stt ?>" href="<?= e($quizUrl($sc)) ?>"
-               title="<?= e($sc['quiz'] . ' — ' . $sc['plan'] . ' — ' . $sc['cohort'] . "\nOuverture : " . date('d/m/Y H:i', strtotime($sc['opens_at'])) . "\nFermeture : " . date('d/m/Y H:i', strtotime($sc['closes_at'])) . ' (' . SCHEDULE_STATUS[$stt] . ')') ?>">
-              <span class="cal-hours"><?= e(schedule_hours($sc)) ?></span>
-              <?= e($sc['quiz']) ?>
-              <small><?= e($sc['cohort']) ?></small>
-            </a>
-          <?php endforeach; ?>
-        </div>
+        <?php $evs = $byDay[$key] ?? []; $cls = 'cal-day' . ($day->format('m') !== $month->format('m') ? ' is-out' : '') . ($key === $today ? ' is-today' : ''); ?>
+        <?php if (!$evs): ?>
+          <div class="<?= $cls ?>"><span class="cal-num"><?= $day->format('j') ?></span></div>
+        <?php else:
+          $label = $weekdays[(int)$day->format('N') - 1] . ' ' . $day->format('j') . ' ' . $months[(int)$day->format('n') - 1] . ' ' . $day->format('Y');
+          $n = count($evs); $statuses = array_count_values(array_map('schedule_status', $evs)); ?>
+          <button type="button" class="<?= $cls ?> has-ev" data-modal="day-<?= $key ?>" data-modal-title="<?= e(ucfirst($label)) ?>"
+                  aria-label="<?= e($label . ' : ' . $n . ' programmation' . ($n > 1 ? 's' : '')) ?>">
+            <span class="cal-num"><?= $day->format('j') ?></span>
+            <span class="cal-count"><?= $n ?> QCM</span>
+            <span class="cal-dots"><?php foreach ($statuses as $k => $c): ?><i class="dot-<?= $k ?>" title="<?= e($c . ' ' . mb_strtolower(SCHEDULE_STATUS[$k])) ?>"></i><?php endforeach; ?></span>
+          </button>
+          <template id="day-<?= $key ?>">
+            <p class="day-sum muted small"><?= $n ?> programmation<?= $n > 1 ? 's' : '' ?> ouvrant ce jour<?= $key === $monthStartDay && $evs[0]['opens_at'] < $monthStart ? ' (ou déjà ouvertes en début de mois)' : '' ?></p>
+            <ul class="day-list">
+              <?php foreach ($evs as $sc): $stt = schedule_status($sc); ?>
+                <li class="day-item ev-<?= $stt ?>">
+                  <div class="day-item-main">
+                    <span class="cal-hours"><?= e(schedule_hours($sc)) ?></span>
+                    <strong><?= e($sc['quiz']) ?></strong>
+                    <span class="small muted"><?= e($sc['plan']) ?></span>
+                    <span class="day-item-meta"><span class="pill"><?= e($sc['cohort']) ?></span><span class="tag tag-<?= $stt ?>"><?= SCHEDULE_STATUS[$stt] ?></span></span>
+                    <span class="small muted">Du <?= e(date('d/m/Y H:i', strtotime($sc['opens_at']))) ?> au <?= e(date('d/m/Y H:i', strtotime($sc['closes_at']))) ?></span>
+                  </div>
+                  <a class="btn btn-sm" href="<?= e($quizUrl($sc)) ?>">Agenda du QCM</a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          </template>
+        <?php endif; ?>
       <?php endfor; ?>
     </div>
     <?php if (!$schedules): ?><p class="muted small">Aucune programmation ce mois-ci<?= $filters ? ' pour ces filtres' : '' ?>.</p><?php endif; ?>

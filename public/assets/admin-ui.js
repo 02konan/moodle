@@ -138,10 +138,11 @@
     m.showModal();
   }
   document.addEventListener('click', (e) => {
-    const row = e.target.closest('tr[data-modal]');
+    const row = e.target.closest('[data-modal]');
     if (!row) return;
     if (e.target.closest('[data-open-modal]')) { openDetail(row); return; }
-    if (e.target.closest('a, button, input, label, select, textarea, form')) return;
+    const inner = e.target.closest('a, button, input, label, select, textarea, form');
+    if (inner && inner !== row && row.contains(inner)) return;   // contrôle à l'intérieur de la ligne / case
     if (window.getSelection()?.toString()) return;   // sélection de texte : ne pas ouvrir
     openDetail(row);
   });

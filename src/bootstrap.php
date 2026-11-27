@@ -3,6 +3,16 @@ declare(strict_types=1);
 
 const ROOT = __DIR__ . '/..';
 
+// Fuseau de l'application : Côte d'Ivoire (UTC+0, sans heure d'été), quel que soit celui du serveur.
+const APP_TIMEZONE = 'Africa/Abidjan';
+date_default_timezone_set(APP_TIMEZONE);
+
+/** Date et heure courantes (Abidjan) au format SQL : les dates sont écrites par l'application, pas par la base. */
+function now_sql(): string
+{
+    return date('Y-m-d H:i:s');
+}
+
 function env(string $key, ?string $default = null): ?string
 {
     static $vars = null;
@@ -44,6 +54,8 @@ function db(): PDO
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
+        // La session SQL suit le fuseau de l'application (NOW(), conversions éventuelles) même si le serveur est en Europe
+        $pdo->exec("SET time_zone = '" . (new DateTimeImmutable('now'))->format('P') . "'");
     }
     return $pdo;
 }
@@ -71,9 +83,81 @@ function ui_icon(string $name): string
         'calendar' => '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
         'copy'   => '<rect x="8" y="8" width="13" height="13" rx="2.5"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8"/>',
         'eye'    => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+        'left'   => '<path d="m15 6-6 6 6 6"/>',
+        'right'  => '<path d="m9 6 6 6-6 6"/>',
         'layers' => '<path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5"/>',
     ];
     return '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">' . ($paths[$name] ?? '') . '</svg>';
+}
+
+const PER_PAGE_OPTIONS = [10, 20, 50, 100];
+
+/** Nombre de lignes par page demandé (?per_page=), parmi PER_PAGE_OPTIONS ; 20 par défaut. */
+function per_page(array $get, int $default = 20): int
+{
+    $n = (int)($get['per_page'] ?? 0);
+    return in_array($n, PER_PAGE_OPTIONS, true) ? $n : $default;
+}
+
+/** Pages à afficher : 1 … 4 5 [6] 7 8 … 23 (null = trou « … »). */
+function pager_pages(int $page, int $pages, int $around = 1): array
+{
+    $keep = [1, $pages];
+    for ($i = $page - $around; $i <= $page + $around; $i++) $keep[] = $i;
+    // Au début et à la fin, on affiche quelques pages de plus plutôt qu'un « … » qui masquerait une seule page
+    if ($page <= 3) array_push($keep, 2, 3, 4);
+    if ($page >= $pages - 2) array_push($keep, $pages - 1, $pages - 2, $pages - 3);
+    $keep = array_values(array_unique(array_filter($keep, fn($p) => $p >= 1 && $p <= $pages)));
+    sort($keep);
+    $out = [];
+    foreach ($keep as $i => $p) {
+        if ($i > 0 && $p - $keep[$i - 1] === 2) $out[] = $p - 1;        // trou d'une seule page : on l'affiche
+        elseif ($i > 0 && $p - $keep[$i - 1] > 2) $out[] = null;
+        $out[] = $p;
+    }
+    return $out;
+}
+
+/**
+ * Pagination : « Afficher [20] par page » à gauche ; [<] [1] … [5] [6] [7] … [23] [>] à droite.
+ * $url(array $params) construit le lien en conservant les filtres.
+ */
+function pager_html(int $page, int $pages, int $perPage, int $total, callable $url, array $get): string
+{
+    if ($total === 0) return '';
+    $from = ($page - 1) * $perPage + 1;
+    $to = min($total, $page * $perPage);
+    $hidden = '';
+    foreach ($get as $k => $v) {
+        if (in_array($k, ['page', 'per_page'], true) || !is_string($v) || $v === '') continue;
+        $hidden .= '<input type="hidden" name="' . e($k) . '" value="' . e($v) . '">';
+    }
+    $opts = '';
+    foreach (PER_PAGE_OPTIONS as $n) $opts .= '<option value="' . $n . '"' . ($n === $perPage ? ' selected' : '') . '>' . $n . '</option>';
+    $h = '<nav class="pager" aria-label="Pagination">'
+       . '<form class="pager-size" method="get" data-live-form>' . $hidden
+       . '<label><span>Afficher</span><select name="per_page" data-submit-on-change aria-label="Lignes par page">' . $opts . '</select><span>par page</span></label>'
+       . '<span class="pager-range">' . $from . '–' . $to . ' sur ' . $total . '</span></form>';
+    if ($pages > 1) {
+        $link = fn(int $p, string $label, string $cls, string $aria = '') => '<a class="pager-btn ' . $cls . '" href="?' . e($url(['page' => $p])) . '"'
+            . ($aria !== '' ? ' aria-label="' . e($aria) . '" title="' . e($aria) . '"' : '') . ($cls === 'is-current' ? ' aria-current="page"' : '') . '>' . $label . '</a>';
+        $off = fn(string $label, string $aria) => '<span class="pager-btn is-disabled" aria-disabled="true" aria-label="' . e($aria) . '">' . $label . '</span>';
+        $h .= '<div class="pager-pages">';
+        $h .= $page > 1 ? $link($page - 1, ui_icon('left'), 'pager-arrow', 'Page précédente') : $off(ui_icon('left'), 'Page précédente');
+        $list = pager_pages($page, $pages);
+        foreach ($list as $i => $p) {
+            if ($p === null) {
+                // « … » : saute au milieu des pages masquées
+                $jump = intdiv($list[$i - 1] + $list[$i + 1], 2);
+                $h .= $link($jump, '…', 'pager-gap', 'Page ' . $jump);
+            } else {
+                $h .= $link($p, (string)$p, $p === $page ? 'is-current' : '', 'Page ' . $p);
+            }
+        }
+        $h .= $page < $pages ? $link($page + 1, ui_icon('right'), 'pager-arrow', 'Page suivante') : $off(ui_icon('right'), 'Page suivante');
+        $h .= '</div>';
+    }
+    return $h . '</nav>';
 }
 
 function e(?string $s): string

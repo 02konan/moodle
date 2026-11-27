@@ -8,7 +8,7 @@ require_admin();
 $pdo = db();
 [$where, $params] = student_filters($_GET);
 
-$perPage = 50;
+$perPage = per_page($_GET);
 $page = max(1, (int)($_GET['page'] ?? 1));
 
 $st = $pdo->prepare("SELECT COUNT(*) FROM students s WHERE $where");
@@ -51,6 +51,7 @@ require __DIR__ . '/../../includes/header.php';
 
   <section class="panel reveal" style="--d:.18s">
     <form class="filters" method="get" data-live-form role="search">
+      <?php if (isset($_GET['per_page'])): ?><input type="hidden" name="per_page" value="<?= $perPage ?>"><?php endif; ?>
       <input type="search" name="q" data-live autocomplete="off" aria-label="Rechercher un étudiant"
              placeholder="Nom complet, identifiant, e-mail, cohorte…" value="<?= e($_GET['q'] ?? '') ?>">
       <input name="cohort" list="cohort-list" data-live autocomplete="off" aria-label="Filtrer par cohorte"
@@ -200,12 +201,6 @@ require __DIR__ . '/../../includes/header.php';
       </table>
     </div>
 
-    <?php if ($pages > 1): ?>
-      <nav class="pager">
-        <?php if ($page > 1): ?><a class="btn" href="?<?= e($query(['page' => $page - 1])) ?>">←</a><?php endif; ?>
-        <span class="muted">Page <?= $page ?> / <?= $pages ?></span>
-        <?php if ($page < $pages): ?><a class="btn" href="?<?= e($query(['page' => $page + 1])) ?>">→</a><?php endif; ?>
-      </nav>
-    <?php endif; ?>
+    <?= pager_html($page, $pages, $perPage, $total, $query, $_GET) ?>
   </section>
 <?php require __DIR__ . '/../../includes/footer.php'; ?>

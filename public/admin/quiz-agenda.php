@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $opens = parse_local_datetime((string)($_POST['opens_at'] ?? ''), 'Ouverture');
                 $closes = parse_local_datetime((string)($_POST['closes_at'] ?? ''), 'Fermeture');
                 check_window($opens, $closes);
-                $pdo->prepare('UPDATE quiz_schedules SET opens_at = ?, closes_at = ? WHERE id = ?')->execute([$opens, $closes, $s['id']]);
+                $pdo->prepare('UPDATE quiz_schedules SET opens_at = ?, closes_at = ?, updated_at = ? WHERE id = ?')->execute([$opens, $closes, now_sql(), $s['id']]);
                 flash("Dates de {$s['cohort']} enregistrées.", 'success');
                 break;
             case 'delete':

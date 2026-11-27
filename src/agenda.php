@@ -73,11 +73,14 @@ function schedule_quiz(PDO $pdo, int $planId, int $itemId, array $cohorts, strin
     foreach ($cohorts as $c) if (!isset($known[$c])) throw new RuntimeException("Cohorte inconnue : $c.");
     check_window($opens, $closes);
 
-    $st = $pdo->prepare('INSERT INTO quiz_schedules (item_id, cohort, opens_at, closes_at) VALUES (?, ?, ?, ?)
-                         ON DUPLICATE KEY UPDATE opens_at = VALUES(opens_at), closes_at = VALUES(closes_at)');
+    // updated_at n'avance que si la fenêtre change (évalué avant les autres colonnes)
+    $st = $pdo->prepare('INSERT INTO quiz_schedules (item_id, cohort, opens_at, closes_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+                         ON DUPLICATE KEY UPDATE updated_at = IF(opens_at = VALUES(opens_at) AND closes_at = VALUES(closes_at), updated_at, VALUES(updated_at)),
+                                                 opens_at = VALUES(opens_at), closes_at = VALUES(closes_at)');
+    $now = now_sql();
     $added = $updated = 0;
     foreach ($cohorts as $c) {
-        $st->execute([$itemId, $c, $opens, $closes]);
+        $st->execute([$itemId, $c, $opens, $closes, $now, $now]);
         if ($st->rowCount() === 1) $added++; elseif ($st->rowCount() === 2) $updated++;
     }
     return [$added, $updated];
