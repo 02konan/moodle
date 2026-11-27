@@ -5,6 +5,7 @@ require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/course_plans.php';
 require __DIR__ . '/../../src/moodle_courses.php';
 require __DIR__ . '/../../src/agenda.php';
+require __DIR__ . '/../../src/moodle_agenda.php';
 require_admin();
 
 $pdo = db();
@@ -91,6 +92,7 @@ require __DIR__ . '/../../includes/header.php';
     </div>
     <span class="export">
       <a class="btn" href="./agenda.php?plan=<?= $planId ?>">Calendrier du cours</a>
+      <button class="btn" type="button" data-moodle-agenda data-plan="<?= $planId ?>" data-item="<?= $itemId ?>" data-label="<?= e($quiz['title']) ?>"><span class="btn-label">Envoyer à Moodle</span></button>
       <button class="btn btn-primary" type="button" data-agenda-pdf="<?= $planId ?>"><span class="btn-label">Agenda du cours en PDF</span></button>
     </span>
   </header>
@@ -99,7 +101,7 @@ require __DIR__ . '/../../includes/header.php';
     <h2>Cohortes programmées <span class="muted">(<?= count($schedules) ?>)</span></h2>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Cohorte</th><th>Ouverture</th><th>Fermeture</th><th>État</th><th></th></tr></thead>
+        <thead><tr><th>Cohorte</th><th>Ouverture</th><th>Fermeture</th><th>État</th><th>Moodle</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($schedules as $s): $st = schedule_status($s); $fid = 'sched-' . (int)$s['id']; ?>
           <tr>
@@ -107,6 +109,7 @@ require __DIR__ . '/../../includes/header.php';
             <td><input form="<?= $fid ?>" type="datetime-local" name="opens_at" value="<?= e($local($s['opens_at'])) ?>" required aria-label="Ouverture"></td>
             <td><input form="<?= $fid ?>" type="datetime-local" name="closes_at" value="<?= e($local($s['closes_at'])) ?>" required aria-label="Fermeture"></td>
             <td><span class="tag tag-<?= $st ?>"><?= SCHEDULE_STATUS[$st] ?></span></td>
+            <td><?php $sync = schedule_sync_state($s); ?><span class="tag tag-sync-<?= $sync ?>"<?= $s['moodle_synced_at'] ? ' title="Dernier envoi : ' . e($fmt($s['moodle_synced_at'])) . '"' : '' ?>><?= SCHEDULE_SYNC_LABELS[$sync] ?></span></td>
             <td class="row-actions">
               <form id="<?= $fid ?>" method="post" action="./quiz-agenda.php">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
@@ -120,7 +123,7 @@ require __DIR__ . '/../../includes/header.php';
           </tr>
         <?php endforeach; ?>
         <?php if (!$schedules): ?>
-          <tr><td colspan="5" class="empty">Aucune cohorte programmée pour ce QCM.</td></tr>
+          <tr><td colspan="6" class="empty">Aucune cohorte programmée pour ce QCM.</td></tr>
         <?php endif; ?>
         </tbody>
       </table>
