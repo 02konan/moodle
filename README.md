@@ -58,6 +58,7 @@ Fonctions à ajouter au service :
 | `core_cohort_search_cohorts`, `core_cohort_create_cohorts`, `core_cohort_add_cohort_members` | cohortes |
 | `core_course_get_courses_by_field`, `enrol_manual_enrol_users` | inscription aux cours (l'inscription manuelle doit être activée dans chaque cours) |
 | `core_group_get_course_groups`, `core_group_create_groups`, `core_group_add_group_members` | groupes `GP/<cohorte>` |
+| `core_enrol_get_enrolled_users`, `core_group_get_group_members` | (recommandées) n'envoyer à Moodle que les étudiants pas encore inscrits / pas encore dans le groupe |
 
 Les étudiants sont inscrits avec le rôle « Étudiant » (identifiant 5 par défaut ; sinon définir `MOODLE_STUDENT_ROLE_ID`).
 

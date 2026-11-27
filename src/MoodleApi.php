@@ -14,7 +14,18 @@ final class MoodleApi
         'core_cohort_search_cohorts', 'core_cohort_create_cohorts', 'core_cohort_add_cohort_members',
         'core_course_get_courses_by_field', 'enrol_manual_enrol_users',
         'core_group_get_course_groups', 'core_group_create_groups', 'core_group_add_group_members',
+        // Facultatives (recommandées) : évitent de réinscrire / réajouter les étudiants déjà présents
+        'core_enrol_get_enrolled_users', 'core_group_get_group_members',
     ];
+
+    /**
+     * Erreur d'envoi de message de Moodle (message de bienvenue au cours, e-mail…) : l'action principale
+     * a bien été faite (le message part après l'enregistrement), seul l'envoi a échoué.
+     */
+    public static function isMessageError(Throwable $e): bool
+    {
+        return stripos($e->getMessage(), 'Message was not sent') !== false;
+    }
 
     public function __construct(private string $url, private string $token) {}
 
@@ -145,14 +156,47 @@ final class MoodleApi
         return $c ? ['id' => (int)$c['id'], 'shortname' => (string)$c['shortname']] : null;
     }
 
-    /** Inscription manuelle (l'inscription manuelle doit être activée dans le cours). */
-    public function enrolUsers(int $courseId, array $userIds, int $roleId): void
+    /**
+     * Inscription manuelle (l'inscription manuelle doit être activée dans le cours).
+     * « Message was not sent » (message de bienvenue non envoyé) n'arrête pas les lots suivants :
+     * les étudiants du lot sont inscrits. Retourne true si au moins un message n'a pas pu partir.
+     */
+    public function enrolUsers(int $courseId, array $userIds, int $roleId): bool
     {
+        $messageFailed = false;
         foreach (array_chunk(array_values($userIds), 100) as $chunk) {
-            $this->call('enrol_manual_enrol_users', ['enrolments' => array_map(
-                fn($id) => ['roleid' => $roleId, 'userid' => (int)$id, 'courseid' => $courseId], $chunk
-            )]);
+            try {
+                $this->call('enrol_manual_enrol_users', ['enrolments' => array_map(
+                    fn($id) => ['roleid' => $roleId, 'userid' => (int)$id, 'courseid' => $courseId], $chunk
+                )]);
+            } catch (RuntimeException $ex) {
+                if (!self::isMessageError($ex)) throw $ex;
+                $messageFailed = true;
+            }
         }
+        return $messageFailed;
+    }
+
+    /** Identifiants des inscrits du cours, ou null si la fonction n'est pas autorisée dans le service. */
+    public function enrolledUserIds(int $courseId): ?array
+    {
+        try {
+            $res = $this->call('core_enrol_get_enrolled_users', ['courseid' => $courseId, 'options' => [['name' => 'userfields', 'value' => 'id']]]);
+        } catch (RuntimeException) {
+            return null;
+        }
+        return array_map(fn($u) => (int)$u['id'], array_filter((array)$res, fn($u) => isset($u['id'])));
+    }
+
+    /** Identifiants des membres d'un groupe, ou null si la fonction n'est pas autorisée dans le service. */
+    public function groupMemberIds(int $groupId): ?array
+    {
+        try {
+            $res = $this->call('core_group_get_group_members', ['groupids' => [$groupId]]);
+        } catch (RuntimeException) {
+            return null;
+        }
+        return array_map('intval', (array)($res[0]['userids'] ?? []));
     }
 
     /** Groupes du cours : ['GP/BTS-2-FC-03-ANGRE' => id, …]. */
