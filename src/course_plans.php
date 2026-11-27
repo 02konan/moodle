@@ -109,7 +109,7 @@ function plan_move_item(PDO $pdo, int $planId, int $itemId, int $dir): void
 
 function plan_touch(PDO $pdo, int $planId): void
 {
-    $pdo->prepare('UPDATE course_plans SET updated_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([$planId]);
+    $pdo->prepare('UPDATE course_plans SET updated_at = ? WHERE id = ?')->execute([now_sql(), $planId]);
 }
 
 /** Nombre de sections et de QCM par cours : [plan_id => ['sections' => n, 'quizzes' => n]]. */
@@ -143,7 +143,7 @@ function plan_duplicate(PDO $pdo, int $planId): int
 
     $pdo->beginTransaction();
     try {
-        $pdo->prepare('INSERT INTO course_plans (title) VALUES (?)')->execute([$title]);
+        $pdo->prepare('INSERT INTO course_plans (title, created_at, updated_at) VALUES (?, ?, ?)')->execute([$title, now_sql(), now_sql()]);
         $newId = (int)$pdo->lastInsertId();
         // Parents avant enfants : sections, puis sous-sections, puis QCM
         $st = $pdo->prepare("SELECT * FROM course_plan_items WHERE plan_id = ?

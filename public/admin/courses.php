@@ -12,8 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $auto  = (array)($_POST['auto'] ?? []);
         $names = (array)($_POST['name'] ?? []);
-        $upsert = $pdo->prepare('INSERT INTO course_overrides (auto_name, moodle_name) VALUES (?, ?)
-                                 ON DUPLICATE KEY UPDATE moodle_name = VALUES(moodle_name)');
+        $upsert = $pdo->prepare('INSERT INTO course_overrides (auto_name, moodle_name, updated_at) VALUES (?, ?, ?)
+                                 ON DUPLICATE KEY UPDATE updated_at = IF(moodle_name = VALUES(moodle_name), updated_at, VALUES(updated_at)),
+                                                         moodle_name = VALUES(moodle_name)');
         $delete = $pdo->prepare('DELETE FROM course_overrides WHERE auto_name = ?');
         $changed = 0;
         $pdo->beginTransaction();
@@ -25,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $delete->execute([$a]);              // vide ou identique : retour au nom automatique
                 $changed += $delete->rowCount();
             } else {
-                $upsert->execute([$a, $n]);
+                $upsert->execute([$a, $n, now_sql()]);
                 $changed += $upsert->rowCount() ? 1 : 0;
             }
         }

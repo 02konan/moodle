@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('Cours dupliqué : vous êtes sur la copie, renommez-la si besoin.', 'success');
                 redirect('./programme.php?id=' . $newId);
             case 'rename_plan':
-                $pdo->prepare('UPDATE course_plans SET title = ? WHERE id = ?')->execute([plan_title((string)($_POST['title'] ?? '')), $id]);
+                $pdo->prepare('UPDATE course_plans SET title = ?, updated_at = ? WHERE id = ?')->execute([plan_title((string)($_POST['title'] ?? '')), now_sql(), $id]);
                 flash('Titre du cours enregistré.', 'success');
                 break;
             case 'add':

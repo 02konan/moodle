@@ -4,9 +4,6 @@ require __DIR__ . '/../../src/bootstrap.php';
 require __DIR__ . '/../../src/Referentiel.php';
 require __DIR__ . '/../../src/students.php';
 
-// Définir le fuseau horaire au début du fichier
-date_default_timezone_set('Africa/Abidjan'); // Côte d'Ivoire
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') json_out(['error' => 'Méthode non autorisée'], 405);
 
 $in = json_decode((string)file_get_contents('php://input'), true);
@@ -22,7 +19,7 @@ if (!empty($in['registration_reference'])) {
 // --- Validation des champs ---
 [$id, $errors] = validate_identity($in);
 if ($errors) json_out(['error' => 'Vérifiez les champs signalés.', 'fields' => $errors], 422);
-$dateConnexion = date('Y-m-d H:i:s');
+$dateConnexion = now_sql(); // heure d'Abidjan (fuseau fixé dans src/bootstrap.php)
 
 // --- Le parcours est revalidé auprès de l'API (cascade complète) ---
 try {
