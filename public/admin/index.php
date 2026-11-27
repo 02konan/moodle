@@ -187,7 +187,7 @@ require __DIR__ . '/../../includes/header.php';
           <ul class="bar-list">
             <?php foreach ($sections as $sec): $pct = round((int)$sec['n'] / $sectionMax * 100); ?>
               <li>
-                <span class="bar-list-label"><?= e($sec['section_label']) ?></span>
+                <span class="bar-list-label" title="<?= e($sec['section_label']) ?>"><?= e(str_ireplace('INSTITUT DE FORMATION SAINTE MARIE', 'IFSM', $sec['section_label'])) ?></span>
                 <span class="bar-list-track"><span style="width: <?= $pct ?>%"></span></span>
                 <span class="bar-list-n"><?= (int)$sec['n'] ?></span>
               </li>

@@ -516,7 +516,9 @@ a.tag:hover { filter: brightness(.96); }
 .plan-card-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; flex-wrap: wrap; }
 .plan-card-actions .btn { height: 34px; padding: 0 12px; font-size: .8rem; }
 .plan-card-actions form { margin: 0; }
-.plan-card-actions { flex-wrap: nowrap; }
+.plan-card-actions { flex-wrap: wrap; row-gap: 8px; min-width: 0; }
+.plan-card-actions > * { flex: none; }
+.plan-card-tools { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
 
 .plan-tree { gap: 12px; }
 .plan-section { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px; display: grid; gap: 6px; background: var(--surface); }
@@ -591,7 +593,10 @@ button.cal-day:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .cal-dots i { width: 8px; height: 8px; border-radius: 50%; display: block; }
 .dot-upcoming { background: var(--info); } .dot-open { background: var(--success); } .dot-closed { background: var(--faint); }
 .day-sum { padding: 16px 22px 0; margin: 0; }
-.day-list { list-style: none; margin: 0; padding: 12px 22px 22px; display: grid; gap: 10px; }
+.day-group { padding: 14px 22px 0; }
+.day-group:last-of-type { padding-bottom: 22px; }
+.day-group-head { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: .9rem; }
+.day-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .day-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: var(--r-md); border-left: 4px solid transparent; }
 .day-item-main { display: grid; gap: 3px; min-width: 0; flex: 1; }
 .day-item-main strong { color: var(--ink); }
@@ -715,6 +720,10 @@ tr.row-details:hover > td { background: var(--surface-2); }
 /* =====================================================================
    Pastilles à cocher (cohortes, QCM)
    ===================================================================== */
+.class-grid { max-height: 320px; overflow-y: auto; padding: 2px; }
+.class-picker .also-toolbar { justify-content: flex-start; }
+.class-picker .also-toolbar input { max-width: 360px; width: 100%; }
+.chip-check.is-filtered { display: none; }
 .chip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 .chip-check {
   position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer;

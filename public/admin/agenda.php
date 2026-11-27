@@ -91,21 +91,27 @@ require __DIR__ . '/../../includes/header.php';
             <span class="cal-dots"><?php foreach ($statuses as $k => $c): ?><i class="dot-<?= $k ?>" title="<?= e($c . ' ' . mb_strtolower(SCHEDULE_STATUS[$k])) ?>"></i><?php endforeach; ?></span>
           </button>
           <template id="day-<?= $key ?>">
-            <p class="day-sum muted small"><?= $n ?> programmation<?= $n > 1 ? 's' : '' ?> ouvrant ce jour<?= $key === $monthStartDay && $evs[0]['opens_at'] < $monthStart ? ' (ou déjà ouvertes en début de mois)' : '' ?></p>
-            <ul class="day-list">
-              <?php foreach ($evs as $sc): $stt = schedule_status($sc); ?>
-                <li class="day-item ev-<?= $stt ?>">
-                  <div class="day-item-main">
-                    <span class="cal-hours"><?= e(schedule_hours($sc)) ?></span>
-                    <strong><?= e($sc['quiz']) ?></strong>
-                    <span class="small muted"><?= e($sc['plan']) ?></span>
-                    <span class="day-item-meta"><span class="pill"><?= e($sc['cohort']) ?></span><span class="tag tag-<?= $stt ?>"><?= SCHEDULE_STATUS[$stt] ?></span></span>
-                    <span class="small muted">Du <?= e(date('d/m/Y H:i', strtotime($sc['opens_at']))) ?> au <?= e(date('d/m/Y H:i', strtotime($sc['closes_at']))) ?></span>
-                  </div>
-                  <a class="btn btn-sm" href="<?= e($quizUrl($sc)) ?>">Agenda du QCM</a>
-                </li>
-              <?php endforeach; ?>
-            </ul>
+            <p class="day-sum muted small"><?= $n ?> programmation<?= $n > 1 ? 's' : '' ?> ouvrant ce jour, <?= count(array_unique(array_column($evs, 'cohort'))) ?> classe<?= count(array_unique(array_column($evs, 'cohort'))) > 1 ? 's' : '' ?><?= $key === $monthStartDay && $evs[0]['opens_at'] < $monthStart ? ' (ou déjà ouvertes en début de mois)' : '' ?></p>
+            <?php $byClass = []; foreach ($evs as $sc) $byClass[$sc['cohort']][] = $sc; ksort($byClass, SORT_NATURAL); ?>
+            <?php foreach ($byClass as $class => $list): ?>
+              <section class="day-group">
+                <h3 class="day-group-head"><span class="pill"><?= e((string)$class) ?></span><span class="muted small"><?= count($list) ?> QCM</span></h3>
+                <ul class="day-list">
+                  <?php foreach ($list as $sc): $stt = schedule_status($sc); ?>
+                    <li class="day-item ev-<?= $stt ?>">
+                      <div class="day-item-main">
+                        <span class="cal-hours"><?= e(schedule_hours($sc)) ?></span>
+                        <strong><?= e($sc['quiz']) ?></strong>
+                        <span class="small muted"><?= e($sc['plan']) ?></span>
+                        <span class="day-item-meta"><span class="tag tag-<?= $stt ?>"><?= SCHEDULE_STATUS[$stt] ?></span></span>
+                        <span class="small muted">Du <?= e(date('d/m/Y H:i', strtotime($sc['opens_at']))) ?> au <?= e(date('d/m/Y H:i', strtotime($sc['closes_at']))) ?></span>
+                      </div>
+                      <a class="btn btn-sm" href="<?= e($quizUrl($sc)) ?>">Agenda du QCM</a>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              </section>
+            <?php endforeach; ?>
           </template>
         <?php endif; ?>
       <?php endfor; ?>
