@@ -59,7 +59,13 @@ final class MoodleApi
         if ($code < 200 || $code >= 300) throw new RuntimeException("Moodle a répondu avec le code HTTP $code.");
         $json = json_decode($body, true);
         if (is_array($json) && isset($json['exception'])) {
-            throw new RuntimeException('Moodle : ' . ($json['message'] ?? $json['errorcode'] ?? 'erreur inconnue'));
+            $msg = 'Moodle : ' . ($json['message'] ?? $json['errorcode'] ?? 'erreur inconnue');
+            // Fonction absente du service web ou droit manquant : on nomme la fonction pour savoir quoi ajouter
+            if (in_array($json['errorcode'] ?? '', ['accessexception', 'webservice_access_exception', 'nopermissions', 'servicenotavailable'], true)
+                || str_contains((string)($json['exception'] ?? ''), 'access_exception')) {
+                $msg .= " (fonction « $function » : ajoutez-la au service web Moodle et vérifiez les droits du compte du jeton)";
+            }
+            throw new RuntimeException($msg);
         }
         if ($json === null && trim($body) !== 'null') throw new RuntimeException('Réponse de Moodle illisible.');
         return $json;

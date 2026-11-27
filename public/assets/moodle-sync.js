@@ -98,16 +98,23 @@
     const body = new FormData();
     body.append('csrf', csrf()); body.append('plan', btn.dataset.plan);
     if (btn.dataset.item) body.append('item', btn.dataset.item);
+    // La fenêtre s'ouvre tout de suite : l'envoi peut prendre du temps (un appel Moodle par QCM et par cohorte)
+    const dlg = agendaDialog();
+    const content = dlg.querySelector('.modal-content');
+    content.innerHTML = '<p class="sync-progress"><span class="spinner" aria-hidden="true"></span>Envoi en cours vers Moodle… Ne fermez pas la page.</p>';
+    if (!dlg.open) dlg.showModal();
     btn.disabled = true; btn.classList.add('is-loading');
     try {
       const res = await fetch('./moodle-agenda.php', { method: 'POST', body, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', Accept: 'application/json' } });
-      const data = await res.json().catch(() => ({ error: 'Réponse illisible du serveur.' }));
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Erreur serveur');
-      const dlg = agendaDialog();
-      dlg.querySelector('.modal-content').innerHTML = renderAgenda(data.report);
-      dlg.showModal();
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { error: `Réponse inattendue du serveur (HTTP ${res.status}).` }; console.error('[moodle-agenda]', text); }
+      if (!res.ok || !data.ok) throw new Error(data.error || data.flash?.[0]?.message || `Erreur serveur (HTTP ${res.status}).`);
+      content.innerHTML = renderAgenda(data.report);
     } catch (e) {
-      window.notify ? window.notify(e.message) : alert(e.message);
+      console.error('[moodle-agenda]', e);
+      content.innerHTML = `<p class="sync-err"><strong>L'envoi a échoué :</strong> ${esc(e.message || String(e))}</p>`
+        + '<p class="muted small">Vérifiez dans Moodle que les fonctions mod_quiz_* sont ajoutées au service web et que le titre du cours correspond au nom abrégé du cours Moodle.</p>';
     } finally {
       btn.disabled = false; btn.classList.remove('is-loading');
     }
