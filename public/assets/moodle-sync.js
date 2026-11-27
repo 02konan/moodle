@@ -16,10 +16,16 @@
     return data.report;
   }
 
+  function courseLine(c) {
+    const parts = [`${c.enrolled} inscrit(s)` + (c.already_enrolled ? `, ${c.already_enrolled} déjà inscrit(s)` : '')];
+    parts.push((c.group_created ? 'groupe créé' : 'groupe existant') + ` : ${c.group_added} ajouté(s)` + (c.already_in_group ? `, ${c.already_in_group} déjà membre(s)` : ''));
+    if (c.message_failed) parts.push('<span class="sync-warn">message de bienvenue non envoyé</span>');
+    return parts.join(' · ');
+  }
+
   function renderReport(r) {
-    const courses = r.courses.map((c) => `<li>${esc(c.shortname)} : ${c.error
-      ? `<span class="sync-err">${esc(c.error)}</span>`
-      : `${c.enrolled} inscrit(s)${c.group_created ? ', groupe créé' : ', groupe existant'}`}</li>`).join('');
+    const courses = r.courses.map((c) => `<li>${esc(c.shortname)} : ${c.found ? courseLine(c) : ''}${c.error
+      ? `${c.found ? ' · ' : ''}<span class="sync-err">${esc(c.error)}</span>` : ''}</li>`).join('');
     const failed = r.failed.map((f) => `<li><code>${esc(f.username)}</code> : <span class="sync-err">${esc(f.message)}</span></li>`).join('');
     const warnings = r.warnings.map((w) => `<li class="sync-warn">${esc(w)}</li>`).join('');
     return `<p><strong>${r.created}</strong> compte(s) créé(s), <strong>${r.existing}</strong> déjà existant(s)`
