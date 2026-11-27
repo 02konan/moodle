@@ -163,6 +163,20 @@
     updateCounts(btn.closest('form'));
   });
 
+  // Filtre de puces : <input data-chip-filter> masque les .chip-check[data-chip-text] du même bloc qui ne correspondent pas
+  document.addEventListener('input', (e) => {
+    const input = e.target.closest('[data-chip-filter]');
+    if (!input) return;
+    const q = input.value.trim().toLowerCase();
+    const scope = input.closest('details, section, form') || document;
+    scope.querySelectorAll('.chip-check[data-chip-text]').forEach((c) => c.classList.toggle('is-filtered', q !== '' && !c.dataset.chipText.includes(q)));
+  });
+
+  // Entrée dans le filtre : ne soumet pas le formulaire
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.closest('[data-chip-filter]')) e.preventDefault();
+  });
+
   // Compteur « n sélectionné(s) » : <span data-count-for="nom[]">
   function updateCounts(form) {
     (form || document).querySelectorAll('[data-count-for]').forEach((el) => {

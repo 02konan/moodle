@@ -94,21 +94,22 @@ require __DIR__ . '/../../includes/header.php';
           <div class="plan-card-actions">
             <a class="btn" href="./programme.php?id=<?= (int)$p['id'] ?>">Ouvrir</a>
             <a class="btn btn-primary" href="./programme-word.php?id=<?= (int)$p['id'] ?>" data-no-async>Fiche Word</a>
-            <button class="icon-btn" type="button" data-agenda-pdf="<?= (int)$p['id'] ?>" title="Agenda du cours (PDF)" aria-label="Agenda du cours en PDF"><?= ui_icon('calendar') ?></button>
-            <span class="bulk-spacer"></span>
-            <form method="post" action="./programmes.php" class="plan-card-dup">
-              <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-              <input type="hidden" name="action" value="duplicate">
-              <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-              <button class="icon-btn" type="submit" title="Dupliquer" aria-label="Dupliquer le cours <?= e($p['title']) ?>"><?= ui_icon('copy') ?></button>
-            </form>
-            <form method="post" action="./programmes.php">
-              <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-              <input type="hidden" name="action" value="delete">
-              <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-              <button class="icon-btn" type="submit" title="Supprimer" aria-label="Supprimer"
-                      data-confirm-title="Supprimer ce cours ?" data-confirm="Sa structure et son agenda seront supprimés. Cette action est irréversible." data-confirm-danger><?= ui_icon('trash') ?></button>
-            </form>
+            <span class="plan-card-tools">
+              <button class="icon-btn" type="button" data-agenda-pdf="<?= (int)$p['id'] ?>" title="Agenda du cours (PDF)" aria-label="Agenda du cours en PDF"><?= ui_icon('calendar') ?></button>
+              <form method="post" action="./programmes.php" class="plan-card-dup">
+                <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                <input type="hidden" name="action" value="duplicate">
+                <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                <button class="icon-btn" type="submit" title="Dupliquer" aria-label="Dupliquer le cours <?= e($p['title']) ?>"><?= ui_icon('copy') ?></button>
+              </form>
+              <form method="post" action="./programmes.php">
+                <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                <button class="icon-btn" type="submit" title="Supprimer" aria-label="Supprimer"
+                        data-confirm-title="Supprimer ce cours ?" data-confirm="Sa structure et son agenda seront supprimés. Cette action est irréversible." data-confirm-danger><?= ui_icon('trash') ?></button>
+              </form>
+            </span>
           </div>
         </article>
       <?php endforeach; ?>

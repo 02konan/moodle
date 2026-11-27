@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         switch ($_POST['action'] ?? '') {
             case 'add':
-                $cohorts = array_merge((array)($_POST['cohorts'] ?? []), [(string)($_POST['other'] ?? '')]);
+                $cohorts = array_map('strval', (array)($_POST['cohorts'] ?? []));
                 $opens = parse_local_datetime((string)($_POST['opens_at'] ?? ''), 'Ouverture');
                 $closes = parse_local_datetime((string)($_POST['closes_at'] ?? ''), 'Fermeture');
                 // Ce QCM + les autres QCM cochés : mêmes cohortes, même intervalle, en une seule fois
@@ -128,7 +128,7 @@ require __DIR__ . '/../../includes/header.php';
   </section>
 
   <section class="panel reveal">
-    <h2>Programmer des cohortes</h2>
+    <h2>Programmer des classes</h2>
     <form method="post" action="./quiz-agenda.php" class="form" data-key="schedule-add">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="plan" value="<?= $planId ?>"><input type="hidden" name="item" value="<?= $itemId ?>">
@@ -136,7 +136,7 @@ require __DIR__ . '/../../includes/header.php';
 
       <?php if ($filiere): ?>
         <div class="field"><span>Cohortes de la filière <?= e(explode(':', $plan['title'], 2)[0]) ?>
-          <button class="link small" type="button" data-check-all="cohorts[]">tout cocher</button></span>
+          <button class="link small" type="button" data-check-all="cohorts[]" data-check-scope=".field">tout cocher</button></span>
           <div class="chip-grid">
             <?php foreach ($filiere as $c): ?>
               <label class="chip-check"><input type="checkbox" name="cohorts[]" value="<?= e($c) ?>">
@@ -147,10 +147,26 @@ require __DIR__ . '/../../includes/header.php';
         </div>
       <?php endif; ?>
 
-      <label class="field"><span><?= $filiere ? 'Autre cohorte (facultatif)' : 'Cohorte' ?></span>
-        <input name="other" list="agenda-cohorts" autocomplete="off" placeholder="Tapez ou choisissez une cohorte">
-        <datalist id="agenda-cohorts"><?php foreach (($filiere ? $others : array_merge($filiere, $others)) as $c): ?><option value="<?= e($c) ?>"></option><?php endforeach; ?></datalist>
-      </label>
+      <?php $pick = $filiere ? $others : array_merge($filiere, $others); ?>
+      <?php if ($pick): ?>
+        <details class="also-quizzes class-picker"<?= $filiere ? '' : ' open' ?>>
+          <summary>
+            <span><?= $filiere ? 'Autres classes' : 'Classes' ?></span>
+            <span class="muted small">sélection multiple<?= $filiere ? ', hors filière' : '' ?></span>
+            <span class="tag tag-warn also-count" data-count-for="cohorts[]" hidden></span>
+          </summary>
+          <div class="also-toolbar">
+            <input type="search" data-chip-filter autocomplete="off" placeholder="Filtrer les classes (ex. ANGRE, BTS 1…)" aria-label="Filtrer les classes">
+          </div>
+          <div class="chip-grid class-grid">
+            <?php foreach ($pick as $c): ?>
+              <label class="chip-check" data-chip-text="<?= e(mb_strtolower((string)$c)) ?>"><input type="checkbox" name="cohorts[]" value="<?= e((string)$c) ?>">
+                <span class="chip-check-box"><?= ui_icon('check') ?></span>
+                <span class="chip-check-text"><?= e((string)$c) ?><small><?= in_array($c, $scheduled, true) ? 'Déjà programmée pour ce QCM' : 'Pas encore programmée' ?></small></span></label>
+            <?php endforeach; ?>
+          </div>
+        </details>
+      <?php endif; ?>
 
       <?php if ($otherQuizzes): ?>
         <?php
