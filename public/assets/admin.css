@@ -817,3 +817,15 @@ td.row-actions form { align-items: center; }
 .bo-burger { display: none !important; }
 @media (max-width: 1024px) { .bo-burger { display: inline-flex !important; } }
 .icon-btn.is-loading { opacity: .55; pointer-events: none; }
+
+/* Envoi de l'agenda vers Moodle */
+.tag-sync-none { --c: var(--muted); --bgc: var(--surface-3); }
+.tag-sync-stale { --c: var(--warning); --bgc: var(--warning-soft); }
+.tag-sync-synced { --c: var(--success); --bgc: var(--success-soft); }
+.agenda-sync-modal .modal-content { padding: 18px 22px 22px; gap: 12px; }
+.agenda-sync-modal ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .86rem; }
+.agenda-sync-modal .sync-quiz { border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 14px; display: grid; gap: 4px; }
+.agenda-sync-modal .sync-quiz.is-ok { border-left: 4px solid var(--success); }
+.agenda-sync-modal .sync-quiz.is-warn { border-left: 4px solid var(--warning); }
+.agenda-sync-modal .sync-quiz.is-ko { border-left: 4px solid var(--danger); }
+.sync-err { color: var(--danger); }

@@ -16,6 +16,8 @@ final class MoodleApi
         'core_group_get_course_groups', 'core_group_create_groups', 'core_group_add_group_members',
         // Facultatives (recommandées) : évitent de réinscrire / réajouter les étudiants déjà présents
         'core_enrol_get_enrolled_users', 'core_group_get_group_members',
+        // Agenda des QCM → dérogations de groupe des tests (Moodle 4.4+)
+        'mod_quiz_get_quizzes_by_courses', 'mod_quiz_get_overrides', 'mod_quiz_save_overrides', 'mod_quiz_delete_overrides',
     ];
 
     /**
@@ -220,5 +222,37 @@ final class MoodleApi
         foreach (array_chunk(array_values($userIds), 100) as $chunk) {
             $this->call('core_group_add_group_members', ['members' => array_map(fn($id) => ['groupid' => $groupId, 'userid' => (int)$id], $chunk)]);
         }
+    }
+
+    /* ---------- Tests (quiz) et dérogations de groupe ---------- */
+
+    /** Tests d'un cours : [['id' => instance, 'cmid' => …, 'name' => …], …]. */
+    public function quizzesByCourse(int $courseId): array
+    {
+        $res = $this->call('mod_quiz_get_quizzes_by_courses', ['courseids' => [$courseId]]);
+        return array_map(fn($q) => ['id' => (int)$q['id'], 'cmid' => (int)($q['coursemodule'] ?? 0), 'name' => (string)$q['name']],
+            array_values(array_filter((array)($res['quizzes'] ?? []), fn($q) => (int)($q['course'] ?? $courseId) === $courseId)));
+    }
+
+    /** Dérogations de groupe d'un test : [groupid => dérogation]. */
+    public function groupOverrides(int $quizId): array
+    {
+        $out = [];
+        foreach ((array)($this->call('mod_quiz_get_overrides', ['quizid' => $quizId])['overrides'] ?? []) as $o) {
+            if (!empty($o['groupid'])) $out[(int)$o['groupid']] = $o;
+        }
+        return $out;
+    }
+
+    /** Crée (sans id) ou met à jour (avec id) une dérogation ; retourne son id. */
+    public function saveOverride(int $quizId, array $override): int
+    {
+        $res = $this->call('mod_quiz_save_overrides', ['data' => ['quizid' => $quizId, 'overrides' => [$override]]]);
+        return (int)($res['ids'][0] ?? 0);
+    }
+
+    public function deleteOverrides(int $quizId, array $ids): void
+    {
+        if ($ids) $this->call('mod_quiz_delete_overrides', ['data' => ['quizid' => $quizId, 'ids' => array_values(array_map('intval', $ids))]]);
     }
 }

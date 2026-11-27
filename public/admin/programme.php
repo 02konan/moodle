@@ -106,6 +106,7 @@ require __DIR__ . '/../../includes/header.php';
     </div>
     <span class="export">
       <button class="btn" type="button" data-agenda-pdf="<?= $id ?>"><span class="btn-label">Agenda PDF</span></button>
+      <button class="btn" type="button" data-moodle-agenda data-plan="<?= $id ?>" data-label="<?= e($plan['title']) ?>"><span class="btn-label">Envoyer l'agenda à Moodle</span></button>
       <form method="post" action="./programme.php">
         <?= $hidden($base + ['action' => 'duplicate']) ?>
         <button class="btn" type="submit"><?= ui_icon('copy') ?>Dupliquer</button>
